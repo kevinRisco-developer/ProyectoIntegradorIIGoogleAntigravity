@@ -1,5 +1,6 @@
 package com.pry.demo.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -7,7 +8,9 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private final String SECRET_KEY = "clave_secreta";
+    @Value("${jwt.secret}")
+    private String SECRET_KEY;
+
 
     public String generateToken(String email, String role) {
         return Jwts.builder()

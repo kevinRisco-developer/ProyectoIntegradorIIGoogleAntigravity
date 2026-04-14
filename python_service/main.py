@@ -6,18 +6,23 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from typing import List
 import numpy as np
+from dotenv import load_dotenv
+
+load_dotenv() # Cargar variables desde .env
 
 app = FastAPI(title="ImportSmart AI Recommender")
 
 # Database Connection Helper (Read-Only as requested)
 def get_db_connection():
     return mysql.connector.connect(
-        host="interchange.proxy.rlwy.net",
-        port=17278,
-        user="root",
-        password="YNUAVetAIOrUyekooSHThqysBEQIFEWA",
-        database="railway"
+        host=os.getenv("DB_HOST", "localhost"),
+        port=int(os.getenv("DB_PORT", 3306)),
+        user=os.getenv("DB_USER", "usuario"),
+        password=os.getenv("DB_PASS", "password"),
+        database=os.getenv("DB_NAME", "ecommerce_db")
     )
+
+
 
 @app.get("/")
 def read_root():

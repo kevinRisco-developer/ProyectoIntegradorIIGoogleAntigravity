@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,7 +49,8 @@ public class CarritoController {
     @GetMapping
     public ResponseEntity<?> getCarrito() {
         Usuario user = getAuthenticatedUser();
-        if (user == null) return ResponseEntity.status(401).body("No autenticado");
+        if (user == null)
+            return ResponseEntity.status(401).body("No autenticado");
 
         Carrito carrito = getOrCreateCarrito(user);
         List<Carrito_detalle> detalles = detalleRepository.findById_carrito(carrito.getId_carrito());
@@ -60,10 +60,11 @@ public class CarritoController {
     @PostMapping("/add")
     public ResponseEntity<?> addItem(@RequestBody Carrito_detalle item) {
         Usuario user = getAuthenticatedUser();
-        if (user == null) return ResponseEntity.status(401).body("No autenticado");
+        if (user == null)
+            return ResponseEntity.status(401).body("No autenticado");
 
         Carrito carrito = getOrCreateCarrito(user);
-        
+
         // Buscar si ya existe el producto en el carrito
         List<Carrito_detalle> actuales = detalleRepository.findById_carrito(carrito.getId_carrito());
         Optional<Carrito_detalle> existente = actuales.stream()
@@ -85,10 +86,11 @@ public class CarritoController {
     @PostMapping("/sync")
     public ResponseEntity<?> syncCarrito(@RequestBody List<Carrito_detalle> items) {
         Usuario user = getAuthenticatedUser();
-        if (user == null) return ResponseEntity.status(401).body("No autenticado");
+        if (user == null)
+            return ResponseEntity.status(401).body("No autenticado");
 
         Carrito carrito = getOrCreateCarrito(user);
-        
+
         for (Carrito_detalle item : items) {
             List<Carrito_detalle> actuales = detalleRepository.findById_carrito(carrito.getId_carrito());
             Optional<Carrito_detalle> existente = actuales.stream()
@@ -112,7 +114,8 @@ public class CarritoController {
     @DeleteMapping("/item/{idProducto}")
     public ResponseEntity<?> removeItem(@PathVariable Long idProducto) {
         Usuario user = getAuthenticatedUser();
-        if (user == null) return ResponseEntity.status(401).body("No autenticado");
+        if (user == null)
+            return ResponseEntity.status(401).body("No autenticado");
 
         Carrito carrito = carritoRepository.findById_usuario(user.getId_usuario());
         if (carrito != null) {
@@ -129,7 +132,8 @@ public class CarritoController {
     @DeleteMapping("/clear")
     public ResponseEntity<?> clearCarrito() {
         Usuario user = getAuthenticatedUser();
-        if (user == null) return ResponseEntity.status(401).body("No autenticado");
+        if (user == null)
+            return ResponseEntity.status(401).body("No autenticado");
 
         Carrito carrito = carritoRepository.findById_usuario(user.getId_usuario());
         if (carrito != null) {
