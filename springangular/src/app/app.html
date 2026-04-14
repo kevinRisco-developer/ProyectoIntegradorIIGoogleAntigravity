@@ -1,0 +1,74 @@
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 glass-nav shadow-sm h-16 flex justify-between items-center px-8 font-headline tracking-tight font-bold">
+<div class="text-2xl font-black text-blue-900 tracking-tighter cursor-pointer" routerLink="/">ImportSmart</div>
+<nav class="hidden md:flex gap-8 items-center">
+<a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out" routerLink="/catalog" routerLinkActive="text-blue-700 border-b-2 border-blue-700 pb-1">Catalog</a>
+<a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out" href="#">Smart Insights</a>
+<a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out" href="#">Tracking</a>
+<a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out" href="#">Help</a>
+</nav>
+<div class="flex items-center gap-4">
+<div class="flex gap-4">
+<button class="hover:scale-105 duration-300" routerLink="/admin" *ngIf="isAdmin()" title="Admin Panel"><span class="material-symbols-outlined text-red-500">admin_panel_settings</span></button>
+        <!-- Cart Icon -->
+        <button (click)="toggleCart()" class="relative p-2 text-gray-400 hover:text-blue-900 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+          <span *ngIf="cartService.getCartCount() > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-1 text-[10px] font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full">
+            {{ cartService.getCartCount() }}
+          </span>
+        </button>
+<button class="hover:scale-105 duration-300" routerLink="/profile" title="User Profile / Settings"><span class="material-symbols-outlined text-primary">settings</span></button>
+<button class="hover:scale-105 duration-300" routerLink="/login" title="Login / Register"><span class="material-symbols-outlined text-primary">account_circle</span></button>
+</div>
+</div>
+</header>
+<main class="pt-16">
+  <router-outlet></router-outlet>
+</main>
+<!-- Side Drawer -->
+<app-cart-drawer [isOpen]="isCartOpen" (close)="isCartOpen = false"></app-cart-drawer>
+<!-- Footer -->
+<footer class="bg-slate-100 w-full border-t-0 mt-20 font-inter text-sm">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-8 px-12 py-16 w-full container mx-auto">
+<div>
+<div class="font-manrope font-extrabold text-blue-900 text-xl mb-6">ImportSmart</div>
+<p class="text-slate-500 leading-relaxed mb-6">Architecting the future of global logistics through intelligent design and cognitive insights.</p>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer hover:scale-110 transition-transform">public</span>
+<span class="material-symbols-outlined text-primary cursor-pointer hover:scale-110 transition-transform">hub</span>
+<span class="material-symbols-outlined text-primary cursor-pointer hover:scale-110 transition-transform">share</span>
+</div>
+</div>
+<div>
+<h6 class="text-blue-900 font-bold mb-6 uppercase tracking-wider text-xs">Solutions</h6>
+<ul class="space-y-4">
+<li><a class="text-slate-500 hover:text-blue-600 transition-all underline decoration-blue-500/30" href="#">Global Sourcing</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-all underline decoration-blue-500/30" href="#">AI Logistics</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-all underline decoration-blue-500/30" href="#">Catalog Access</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-all underline decoration-blue-500/30" href="#">Smart Reports</a></li>
+</ul>
+</div>
+<div>
+<h6 class="text-blue-900 font-bold mb-6 uppercase tracking-wider text-xs">Support</h6>
+<ul class="space-y-4">
+<li><a class="text-slate-500 hover:text-blue-600 transition-all underline decoration-blue-500/30" href="#">Privacy Policy</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-all underline decoration-blue-500/30" href="#">Terms of Service</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-all underline decoration-blue-500/30" href="#">API Documentation</a></li>
+<li><a class="text-slate-500 hover:text-blue-600 transition-all underline decoration-blue-500/30" href="#">Contact Us</a></li>
+</ul>
+</div>
+<div>
+<h6 class="text-blue-900 font-bold mb-6 uppercase tracking-wider text-xs">Newsletter</h6>
+<p class="text-slate-500 mb-4">Get the latest smart insights weekly.</p>
+<div class="flex">
+<input class="bg-white border-none rounded-l-lg p-2 text-xs w-full focus:ring-1 focus:ring-primary" placeholder="Email" type="email"/>
+<button class="bg-primary text-white p-2 rounded-r-lg"><span class="material-symbols-outlined text-sm">send</span></button>
+</div>
+</div>
+</div>
+<div class="border-t border-slate-200 py-8 px-12 text-center text-slate-400 text-xs">
+            © 2024 ImportSmart. The Cognitive Architect System.
+        </div>
+</footer>
