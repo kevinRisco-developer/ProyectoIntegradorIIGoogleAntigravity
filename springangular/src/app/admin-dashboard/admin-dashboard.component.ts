@@ -13,7 +13,9 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 export class AdminDashboardComponent implements OnInit {
   products: Product[] = [];
   categories: Category[] = [];
+  featuredProducts: any[] = [];
   productForm: FormGroup;
+
   
   showForm: boolean = false;
   editingId: number | null = null;
@@ -48,7 +50,13 @@ export class AdminDashboardComponent implements OnInit {
       this.categories = cats;
       this.cdr.detectChanges();
     });
+
+    this.productService.getFeaturedProducts().subscribe(res => {
+      this.featuredProducts = res;
+      this.cdr.detectChanges();
+    });
   }
+
 
   openCreateForm() {
     this.editingId = null;

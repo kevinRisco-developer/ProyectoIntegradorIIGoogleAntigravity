@@ -61,12 +61,14 @@ export class LoginComponent {
           if (res && res.requireMfa) {
             this.showMfaMode();
           } else {
+            this.authService.setMfaVerified(true); // Verificado (MFA no requerido)
             this.cartService.syncLocalStorageToDb();
             this.router.navigate(['/']);
           }
           this.loading = false;
           this.cdr.detectChanges();
         },
+
         error: (err) => {
           this.errorMessage = 'Credenciales inválidas';
           this.loading = false;
@@ -78,11 +80,13 @@ export class LoginComponent {
       const code = this.loginForm.get('mfaCode')?.value;
       this.authService.loginMfa({ email, code }).subscribe({
         next: (res) => {
+          this.authService.setMfaVerified(true);
           this.cartService.syncLocalStorageToDb();
           this.router.navigate(['/']);
           this.loading = false;
           this.cdr.detectChanges();
         },
+
         error: (err) => {
           this.errorMessage = 'Código incorrecto. Vuelve a intentarlo.';
           this.loading = false;

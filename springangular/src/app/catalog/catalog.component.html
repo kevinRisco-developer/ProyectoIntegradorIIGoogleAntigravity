@@ -75,10 +75,11 @@
                class="group bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-2xl hover:shadow-blue-100/50 transition-all duration-500 overflow-hidden flex flex-col">
             
             <!-- Image Area -->
-            <div class="relative h-64 overflow-hidden bg-gray-50">
+            <div class="relative h-64 overflow-hidden bg-gray-50 cursor-pointer" [routerLink]="['/product', product.id_producto]">
               <img [src]="product.imagen_url" 
                    [alt]="product.nombre"
                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+
               <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-sm">
                 <span class="text-primary font-bold tracking-tighter text-lg">${{ product.precio | number:'1.2-2' }}</span>
               </div>

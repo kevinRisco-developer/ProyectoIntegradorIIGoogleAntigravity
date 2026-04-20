@@ -69,13 +69,15 @@ public class AuthController {
             dev.samstevens.totp.code.CodeVerifier verifier = new dev.samstevens.totp.code.DefaultCodeVerifier(new dev.samstevens.totp.code.DefaultCodeGenerator(), new dev.samstevens.totp.time.SystemTimeProvider());
             
             if (verifier.isValidCode(user.getTotpSecret(), code)) {
-                String role = user.getEmail().equals("admin@gmail.com") ? "ADMIN" : "USER";
-                String token = jwtUtil.generateToken(user.getEmail(), role);
-                
-                java.util.Map<String, Object> response = new java.util.HashMap<>();
-                response.put("token", token);
-                response.put("role", role);
-                return ResponseEntity.ok(response);
+            String role = user.getEmail().equals("admin@gmail.com") ? "ADMIN" : "USER";
+            String token = jwtUtil.generateToken(user.getEmail(), role);
+            
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("token", token);
+            response.put("role", role);
+            response.put("name", user.getNombre());
+            return ResponseEntity.ok(response);
+
             } else {
                 return ResponseEntity.status(401).body("Código de autenticación incorrecto");
             }

@@ -44,6 +44,8 @@ public class HistorialController {
                 .orElseThrow(() -> new RuntimeException("Historial con id: " + id + "no encontrado"));
         historial.setFecha(historialDetails.getFecha());
         historial.setAccion(historialDetails.getAccion());
+        historial.setPermanencia(historialDetails.getPermanencia());
         return historialRepository.save(historial);
     }
 }
+

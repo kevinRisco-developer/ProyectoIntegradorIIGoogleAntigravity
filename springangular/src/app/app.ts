@@ -17,6 +17,8 @@ export class App implements OnInit {
   usuarios: any[] = [];
   protected readonly title = signal('springangular');
   isCartOpen: boolean = false;
+  isUserMenuOpen: boolean = false;
+
 
   constructor(
     private usuarioService: Usuario,

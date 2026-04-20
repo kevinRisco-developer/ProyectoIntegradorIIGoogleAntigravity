@@ -2,16 +2,23 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProductService } from '../services/product.service';
 import { CartService } from '../services/cart.service';
-import { Product } from '../models/product.model';
+import { Product, Category } from '../models/product.model';
+
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './home.component.html'
 })
+
 export class HomeComponent implements OnInit {
   recommendedProducts: Product[] = [];
+  categories: Category[] = [];
+  featuredProducts: any[] = [];
+
+
 
   constructor(
     private productService: ProductService,
@@ -23,9 +30,7 @@ export class HomeComponent implements OnInit {
     console.log('Iniciando carga de recomendaciones...');
     this.productService.getRecommendations().subscribe({
       next: (prods) => {
-        console.log('Recomendaciones recibidas en componente:', prods);
         this.recommendedProducts = prods;
-        // Forzar a Angular a redibujar la pantalla inmediatamente
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -34,7 +39,19 @@ export class HomeComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+
+    this.productService.getCategories().subscribe(cats => {
+      this.categories = cats.slice(0, 3); // Solo tomamos las 3 primeras
+      this.cdr.detectChanges();
+    });
+
+    this.productService.getFeaturedProducts().subscribe(prods => {
+      this.featuredProducts = prods;
+      this.cdr.detectChanges();
+    });
   }
+
+
 
   addToCart(product: Product) {
     this.cartService.addToCart(product);

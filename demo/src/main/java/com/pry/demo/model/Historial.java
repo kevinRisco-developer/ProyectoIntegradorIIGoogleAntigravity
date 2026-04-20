@@ -17,6 +17,8 @@ public class Historial {
     Long id_producto;
     String accion;
     Timestamp fecha;
+    Integer permanencia;
+
 
     public Long getId_historial() {
         return id_historial;
@@ -58,4 +60,12 @@ public class Historial {
         this.fecha = fecha;
     }
 
+    public Integer getPermanencia() {
+        return permanencia;
+    }
+
+    public void setPermanencia(Integer permanencia) {
+        this.permanencia = permanencia;
+    }
 }
+

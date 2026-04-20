@@ -1,28 +1,62 @@
 <!-- Top Navigation Shell -->
 <header class="fixed top-0 w-full z-50 bg-surface/80 glass-nav shadow-sm h-16 flex justify-between items-center px-8 font-headline tracking-tight font-bold">
-<div class="text-2xl font-black text-blue-900 tracking-tighter cursor-pointer" routerLink="/">ImportSmart</div>
-<nav class="hidden md:flex gap-8 items-center">
-<a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out" routerLink="/catalog" routerLinkActive="text-blue-700 border-b-2 border-blue-700 pb-1">Catalog</a>
-<a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out" href="#">Smart Insights</a>
-<a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out" href="#">Tracking</a>
-<a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out" href="#">Help</a>
-</nav>
-<div class="flex items-center gap-4">
-<div class="flex gap-4">
-<button class="hover:scale-105 duration-300" routerLink="/admin" *ngIf="isAdmin()" title="Admin Panel"><span class="material-symbols-outlined text-red-500">admin_panel_settings</span></button>
+    <div class="text-2xl font-black text-blue-900 tracking-tighter cursor-pointer" routerLink="/">ImportSmart</div>
+    <nav class="hidden md:flex gap-8 items-center">
+      <a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out cursor-pointer" routerLink="/" fragment="inicio" routerLinkActive="text-blue-700 font-bold">Inicio</a>
+      <a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out cursor-pointer" routerLink="/" fragment="productos" routerLinkActive="text-blue-700 font-bold">Productos</a>
+      <a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out cursor-pointer" routerLink="/" fragment="nosotros" routerLinkActive="text-blue-700 font-bold">Sobre Nosotros</a>
+      <a class="text-slate-600 hover:text-blue-900 duration-300 ease-in-out cursor-pointer" routerLink="/" fragment="contacto" routerLinkActive="text-blue-700 font-bold">Contáctanos</a>
+    </nav>
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 relative">
+        <button class="hover:scale-105 duration-300" routerLink="/admin" *ngIf="isAdmin()" title="Admin Panel">
+          <span class="material-symbols-outlined text-red-500">admin_panel_settings</span>
+        </button>
+        
         <!-- Cart Icon -->
         <button (click)="toggleCart()" class="relative p-2 text-gray-400 hover:text-blue-900 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
           </svg>
           <span *ngIf="cartService.getCartCount() > 0" class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-1 text-[10px] font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full">
             {{ cartService.getCartCount() }}
           </span>
         </button>
-<button class="hover:scale-105 duration-300" routerLink="/profile" title="User Profile / Settings"><span class="material-symbols-outlined text-primary">settings</span></button>
-<button class="hover:scale-105 duration-300" routerLink="/login" title="Login / Register"><span class="material-symbols-outlined text-primary">account_circle</span></button>
-</div>
-</div>
+
+        <!-- User Identity & Menu -->
+        <div class="flex items-center gap-2 relative">
+          <span *ngIf="authService.isLoggedIn()" class="text-sm font-bold text-blue-900 hidden sm:block">
+            {{ authService.getUsername() }}
+          </span>
+          <button (click)="isUserMenuOpen = !isUserMenuOpen" class="hover:scale-105 duration-300 flex items-center gap-1">
+            <span class="material-symbols-outlined text-primary">account_circle</span>
+            <span class="material-symbols-outlined text-xs transition-transform" [class.rotate-180]="isUserMenuOpen">expand_more</span>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div *ngIf="isUserMenuOpen" (mouseleave)="isUserMenuOpen = false" class="absolute top-12 right-0 w-48 bg-white shadow-2xl rounded-xl border border-slate-100 py-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+            <ng-container *ngIf="!authService.isLoggedIn(); else loggedInMenu">
+              <button routerLink="/login" (click)="isUserMenuOpen = false" class="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-blue-50 hover:text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">login</span> Iniciar Sesión
+              </button>
+              <button routerLink="/register" (click)="isUserMenuOpen = false" class="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-blue-50 hover:text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">person_add</span> Registrarse
+              </button>
+            </ng-container>
+            <ng-template #loggedInMenu>
+              <button routerLink="/profile" (click)="isUserMenuOpen = false" class="w-full text-left px-4 py-2 text-sm text-slate-600 hover:bg-blue-50 hover:text-primary flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">person</span> Mi Perfil
+              </button>
+              <hr class="my-1 border-slate-100">
+              <button (click)="logout(); isUserMenuOpen = false" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">logout</span> Cerrar Sesión
+              </button>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
 </header>
 <main class="pt-16">
   <router-outlet></router-outlet>

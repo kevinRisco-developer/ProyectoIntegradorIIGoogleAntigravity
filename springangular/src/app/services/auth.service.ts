@@ -10,7 +10,18 @@ export class AuthService {
   private apiUrl = 'http://localhost:8080/auth';
   private mfaUrl = 'http://localhost:8080/mfa';
 
+  private mfaVerified = false;
+
   constructor(private http: HttpClient) {}
+
+  setMfaVerified(v: boolean) {
+    this.mfaVerified = v;
+  }
+
+  isMfaVerified(): boolean {
+    return this.mfaVerified;
+  }
+
 
   login(credentials: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
@@ -20,6 +31,13 @@ export class AuthService {
           if (res.role) {
             localStorage.setItem('role', res.role);
           }
+          if (res.name) {
+            localStorage.setItem('name', res.name);
+          }
+          if (res.id_usuario) {
+            localStorage.setItem('userId', res.id_usuario.toString());
+          }
+
         }
       })
     );
@@ -45,6 +63,11 @@ export class AuthService {
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    localStorage.removeItem('name');
+  }
+
+  getUsername(): string | null {
+    return localStorage.getItem('name');
   }
 
   isLoggedIn(): boolean {
