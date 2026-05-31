@@ -51,7 +51,14 @@ export class AuthService {
           if (res.role) {
             localStorage.setItem('role', res.role);
           }
+          if (res.name) {
+            localStorage.setItem('name', res.name);
+          }
+          if (res.id_usuario) {
+            localStorage.setItem('userId', res.id_usuario.toString());
+          }
         }
+
       })
     );
   }

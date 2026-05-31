@@ -48,6 +48,8 @@ public class AuthController {
             java.util.Map<String, Object> response = new java.util.HashMap<>();
             response.put("token", token);
             response.put("role", role);
+            response.put("name", user.getNombre());
+            response.put("id_usuario", user.getId_usuario());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
@@ -76,7 +78,9 @@ public class AuthController {
             response.put("token", token);
             response.put("role", role);
             response.put("name", user.getNombre());
+            response.put("id_usuario", user.getId_usuario());
             return ResponseEntity.ok(response);
+
 
             } else {
                 return ResponseEntity.status(401).body("Código de autenticación incorrecto");
