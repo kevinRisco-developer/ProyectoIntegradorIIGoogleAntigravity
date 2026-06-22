@@ -1,44 +1,53 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { Usuario } from './services/usuario';
 import { AuthService } from './services/auth.service';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
 import { CartService } from './services/cart.service';
-import { CartDrawerComponent } from './components/cart-drawer/cart-drawer.component';
+import { NavbarComponent } from './shared/navbar/navbar.component';
+import { FooterComponent } from './shared/footer/footer.component';
+import { CarritoComponent } from './cliente/carrito/carrito.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, CartDrawerComponent],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  imports: [CommonModule, RouterOutlet, NavbarComponent, FooterComponent, CarritoComponent],
+  template: `
+    <!-- Barra de Navegación Global -->
+    <app-navbar (toggleCart)="toggleCart()"></app-navbar>
+
+    <!-- Contenido de la Página (Router Outlet) -->
+    <main class="pt-16 min-h-screen bg-slate-950">
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- Carrito Lateral (Drawer) -->
+    <app-carrito [isOpen]="isCartOpen" (close)="isCartOpen = false"></app-carrito>
+
+    <!-- Footer Global -->
+    <app-footer></app-footer>
+  `,
+  styles: [`
+    :host {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+  `]
 })
 export class App implements OnInit {
-  usuarios: any[] = [];
   protected readonly title = signal('springangular');
   isCartOpen: boolean = false;
-  isUserMenuOpen: boolean = false;
-
 
   constructor(
-    private usuarioService: Usuario,
     public authService: AuthService,
     public cartService: CartService
   ) {}
 
   ngOnInit(): void {
-    this.usuarioService.getUsuarios().subscribe(data => {
-      this.usuarios = data as any[];
-    });
-  }
-
-  isAdmin(): boolean {
-    return this.authService.isAdmin();
-  }
-
-  logout() {
-    this.authService.logout();
-    window.location.href = '/login';
+    // Sincronizar carrito de localStorage si el usuario ya está logueado
+    if (this.authService.isLoggedIn()) {
+      this.cartService.syncLocalStorageToDb();
+    }
   }
 
   toggleCart() {

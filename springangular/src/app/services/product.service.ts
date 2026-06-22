@@ -53,4 +53,17 @@ export class ProductService {
   deleteProduct(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/producto/${id}`, { headers: this.getAuthHeaders() });
   }
+
+  createCategory(category: Category): Observable<Category> {
+    return this.http.post<Category>(`${this.apiUrl}/categoria`, category, { headers: this.getAuthHeaders() });
+  }
+
+  updateCategory(id: number, category: Category): Observable<Category> {
+    return this.http.put<Category>(`${this.apiUrl}/categoria/${id}`, category, { headers: this.getAuthHeaders() });
+  }
+
+  deleteCategory(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/categoria/${id}`, { headers: this.getAuthHeaders() });
+  }
 }
+

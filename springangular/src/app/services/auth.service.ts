@@ -108,4 +108,13 @@ export class AuthService {
   disableMfa(): Observable<any> {
     return this.http.post(`${this.mfaUrl}/disable`, {});
   }
+
+  recuperarContrasena(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/recuperar`, { email });
+  }
+
+  resetPassword(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reset-password`, data);
+  }
 }
+

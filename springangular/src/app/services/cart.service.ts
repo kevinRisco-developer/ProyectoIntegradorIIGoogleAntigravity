@@ -130,4 +130,9 @@ export class CartService {
   getOrderDetails(id: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/pedido/${id}`, { headers: this.getAuthHeaders() });
   }
+
+  getMisPedidos(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/pedido/mis-pedidos`, { headers: this.getAuthHeaders() });
+  }
 }
+
