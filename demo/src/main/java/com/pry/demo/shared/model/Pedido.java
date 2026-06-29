@@ -1,7 +1,10 @@
 package com.pry.demo.shared.model;
 
 import java.sql.Timestamp;
+import com.pry.demo.modulo_ventas.enums.EstadoPedido;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,7 +19,8 @@ public class Pedido {
     private Long id_usuario;
     private Timestamp fecha;
     private double total;
-    private String estado;
+    @Enumerated(EnumType.STRING)
+    private EstadoPedido estado;
     
     // Campos de envío y pago
     private String nombreCompleto;
@@ -56,11 +60,11 @@ public class Pedido {
         this.total = total;
     }
 
-    public String getEstado() {
+    public EstadoPedido getEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(EstadoPedido estado) {
         this.estado = estado;
     }
 

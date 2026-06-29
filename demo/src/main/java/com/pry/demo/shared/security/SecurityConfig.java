@@ -47,6 +47,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/categoria/**").hasAnyAuthority("ADMIN", "INVENTARIO")
                         .requestMatchers(HttpMethod.DELETE, "/categoria/**").hasAnyAuthority("ADMIN", "INVENTARIO")
                         .requestMatchers("/carrito/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/pedido/pagados").hasAuthority("VENDEDOR")
+                        .requestMatchers(HttpMethod.PUT, "/pedido/*/entregar").hasAuthority("VENDEDOR")
                         .requestMatchers("/pedido/**").authenticated()
                         .requestMatchers("/pago/**").hasAuthority("ADMIN")
                         .requestMatchers("/mfa/**").authenticated()

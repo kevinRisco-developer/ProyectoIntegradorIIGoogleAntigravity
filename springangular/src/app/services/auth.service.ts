@@ -93,6 +93,10 @@ export class AuthService {
     return this.getRole() === 'ADMIN';
   }
 
+  isVendedor(): boolean {
+    return this.getRole() === 'VENDEDOR';
+  }
+
   getMfaStatus(): Observable<any> {
     return this.http.get(`${this.mfaUrl}/status`);
   }

@@ -1,16 +1,13 @@
 package com.pry.demo.modulo_ventas.controller;
 
+import com.pry.demo.modulo_ventas.service.PedidoService;
 import com.pry.demo.shared.model.*;
 import com.pry.demo.shared.repository.*;
-import com.pry.demo.modulo_integraciones.service.EmailService;
-import com.pry.demo.modulo_ventas.service.PagoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,108 +18,73 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class PedidoController {
 
+    @Autowired private PedidoService pedidoService;
     @Autowired private PedidoRepository pedidoRepository;
     @Autowired private Detalle_pedidoRepository detallePedidoRepository;
-    @Autowired private CarritoRepository carritoRepository;
-    @Autowired private Carrito_detalleRepository carritoDetalleRepository;
     @Autowired private ProductoRepository productoRepository;
     @Autowired private UsuarioRepository usuarioRepository;
-    @Autowired private EmailService emailService;
-    @Autowired private PagoService pagoService;
 
     private Usuario getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return usuarioRepository.findByEmail(email);
     }
 
+    /**
+     * POST /pedido
+     * Crea un pedido para el usuario autenticado.
+     * Estado inicial automático: EN_PROCESO → PAGADO (tras confirmar pago simulado).
+     */
     @PostMapping
-    @Transactional
     public ResponseEntity<?> createPedido(@RequestBody Pedido pedidoRequest) {
         Usuario user = getAuthenticatedUser();
         if (user == null) return ResponseEntity.status(401).body("No autenticado");
 
-        Carrito carrito = carritoRepository.findById_usuario(user.getId_usuario());
-        if (carrito == null) return ResponseEntity.badRequest().body("Carrito no encontrado");
-
-        List<Carrito_detalle> carritoItems = carritoDetalleRepository.findById_carrito(carrito.getId_carrito());
-        if (carritoItems.isEmpty()) return ResponseEntity.badRequest().body("El carrito está vacío");
-
-        // Crear el Pedido Maestro
-        Pedido nuevoPedido = new Pedido();
-        nuevoPedido.setId_usuario(user.getId_usuario());
-        nuevoPedido.setFecha(new Timestamp(System.currentTimeMillis()));
-        nuevoPedido.setEstado("PENDIENTE");
-        nuevoPedido.setNombreCompleto(pedidoRequest.getNombreCompleto());
-        nuevoPedido.setDireccionEnvio(pedidoRequest.getDireccionEnvio());
-        nuevoPedido.setTelefono(pedidoRequest.getTelefono());
-        nuevoPedido.setMetodoPago(pedidoRequest.getMetodoPago());
-
-        double total = 0;
-        final List<Detalle_pedido> detallesParaGuardar = new ArrayList<>();
-        final List<Map<String, Object>> detallesParaEmail = new ArrayList<>();
-
-        for (Carrito_detalle item : carritoItems) {
-            Producto producto = productoRepository.findById(item.getId_producto())
-                    .orElseThrow(() -> new RuntimeException("Producto no encontrado: " + item.getId_producto()));
-
-            if (producto.getStock() < item.getCantidad()) {
-                return ResponseEntity.badRequest().body("Stock insuficiente para: " + producto.getNombre());
-            }
-
-            producto.setStock(producto.getStock() - item.getCantidad());
-            productoRepository.save(producto);
-
-            Detalle_pedido detalle = new Detalle_pedido();
-            detalle.setId_producto(producto.getId_producto());
-            detalle.setCantidad(item.getCantidad());
-            detalle.setPrecio(producto.getPrecio());
-            total += (producto.getPrecio() * item.getCantidad());
-            detallesParaGuardar.add(detalle);
-
-            Map<String, Object> emailItem = new HashMap<>();
-            emailItem.put("nombre_producto", producto.getNombre());
-            emailItem.put("cantidad", item.getCantidad());
-            emailItem.put("precio", producto.getPrecio());
-            detallesParaEmail.add(emailItem);
-        }
-
-        nuevoPedido.setTotal(total);
-        Pedido pedidoGuardado = pedidoRepository.save(nuevoPedido);
-
-        // Guardar Detalles
-        for (Detalle_pedido d : detallesParaGuardar) {
-            d.setId_pedido(pedidoGuardado.getId_pedido());
-            detallePedidoRepository.save(d);
-        }
-
-        // Procesar pago simulado
-        pagoService.procesarPagoSimulado(pedidoGuardado.getId_pedido(), total, pedidoRequest.getMetodoPago());
-
-        // Actualizar estado del pedido a COMPLETADO
-        pedidoGuardado.setEstado("COMPLETADO");
-        pedidoRepository.save(pedidoGuardado);
-
-        // Limpiar Carrito
-        carritoDetalleRepository.deleteAll(carritoItems);
-
-        // Enviar Email con ticket de compra
-        try {
-            emailService.sendOrderTicket(user, pedidoGuardado, detallesParaEmail);
-        } catch (Exception e) {
-            System.err.println("Error enviando email de confirmación: " + e.getMessage());
-        }
-
-        return ResponseEntity.ok(pedidoGuardado);
+        Pedido pedido = pedidoService.crearPedido(user, pedidoRequest);
+        return ResponseEntity.ok(pedido);
     }
 
-    @GetMapping("/{id}")
+    /**
+     * PUT /pedido/{id}/entregar
+     * Transición manual PAGADO → ENTREGADO.
+     * Requiere rol VENDEDOR (configurado en SecurityConfig).
+     * Devuelve 400 si el pedido no está en estado PAGADO.
+     */
+    @PutMapping("/{id:[0-9]+}/entregar")
+    public ResponseEntity<?> marcarEntregado(@PathVariable Long id) {
+        Pedido pedido = pedidoService.marcarEntregado(id);
+        return ResponseEntity.ok(pedido);
+    }
+
+    /**
+     * GET /pedido/pagados
+     * Devuelve todos los pedidos con estado PAGADO.
+     * Requiere rol VENDEDOR (configurado en SecurityConfig).
+     */
+    @GetMapping("/pagados")
+    public ResponseEntity<?> getPedidosPagados() {
+        return ResponseEntity.ok(pedidoService.getPedidosPagados());
+    }
+
+    /**
+     * GET /pedido/{id}
+     * Obtiene el detalle de un pedido. Accesible por el propietario o por ADMIN/VENDEDOR.
+     */
+    @GetMapping("/{id:[0-9]+}")
     public ResponseEntity<?> getPedidoDetails(@PathVariable Long id) {
         Usuario user = getAuthenticatedUser();
         if (user == null) return ResponseEntity.status(401).body("No autenticado");
 
         Pedido pedido = pedidoRepository.findById(id).orElse(null);
-        if (pedido == null || !pedido.getId_usuario().equals(user.getId_usuario())) {
+        if (pedido == null) {
             return ResponseEntity.status(404).body("Pedido no encontrado");
+        }
+
+        // Obtener el rol del usuario autenticado
+        String authorities = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toString();
+        boolean isVendedorOrAdmin = authorities.contains("VENDEDOR") || authorities.contains("ADMIN");
+
+        if (!pedido.getId_usuario().equals(user.getId_usuario()) && !isVendedorOrAdmin) {
+            return ResponseEntity.status(403).body("Acceso denegado");
         }
 
         List<Detalle_pedido> detalles = detallePedidoRepository.findById_pedido(pedido.getId_pedido());
@@ -144,6 +106,10 @@ public class PedidoController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * GET /pedido/mis-pedidos
+     * Devuelve los pedidos del usuario autenticado.
+     */
     @GetMapping("/mis-pedidos")
     public ResponseEntity<?> getMisPedidos() {
         Usuario user = getAuthenticatedUser();
@@ -155,6 +121,10 @@ public class PedidoController {
         return ResponseEntity.ok(pedidos);
     }
 
+    /**
+     * GET /pedido
+     * Devuelve todos los pedidos (solo ADMIN/VENDEDOR, configurado en SecurityConfig).
+     */
     @GetMapping
     public ResponseEntity<?> getAllPedidos() {
         return ResponseEntity.ok(pedidoRepository.findAll());

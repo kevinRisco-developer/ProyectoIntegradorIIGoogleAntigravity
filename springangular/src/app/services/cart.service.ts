@@ -134,5 +134,13 @@ export class CartService {
   getMisPedidos(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/pedido/mis-pedidos`, { headers: this.getAuthHeaders() });
   }
+
+  getPedidosPagados(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/pedido/pagados`, { headers: this.getAuthHeaders() });
+  }
+
+  entregarPedido(id: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/pedido/${id}/entregar`, {}, { headers: this.getAuthHeaders() });
+  }
 }
 

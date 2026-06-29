@@ -28,6 +28,11 @@ import { CartService } from '../../services/cart.service';
           <button class="hover:scale-110 duration-300 flex items-center p-2 rounded-lg hover:bg-slate-800" routerLink="/admin" *ngIf="isAdmin()" title="Panel de Administración">
             <span class="material-symbols-outlined text-amber-500">admin_panel_settings</span>
           </button>
+
+          <!-- Recojo Producto Shortcut (Solo VENDEDOR) -->
+          <button class="hover:scale-110 duration-300 flex items-center p-2 rounded-lg hover:bg-slate-800" routerLink="/recojo-producto" *ngIf="authService.getRole() === 'VENDEDOR'" title="Recojo Producto">
+            <span class="material-symbols-outlined text-blue-400">local_shipping</span>
+          </button>
           
           <!-- Cart Icon -->
           <button (click)="onToggleCart()" class="relative p-2 text-slate-300 hover:text-blue-400 transition-all rounded-lg hover:bg-slate-800">
@@ -68,6 +73,9 @@ import { CartService } from '../../services/cart.service';
                 </button>
                 <button routerLink="/mis-pedidos" (click)="isUserMenuOpen = false" class="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white flex items-center gap-2">
                   <span class="material-symbols-outlined text-sm">receipt_long</span> Mis Pedidos
+                </button>
+                <button routerLink="/recojo-producto" *ngIf="authService.getRole() === 'VENDEDOR'" (click)="isUserMenuOpen = false" class="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white flex items-center gap-2">
+                  <span class="material-symbols-outlined text-sm">local_shipping</span> Recojo Producto
                 </button>
                 <hr class="my-1 border-slate-700">
                 <button (click)="logout(); isUserMenuOpen = false" class="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-950/40 flex items-center gap-2">

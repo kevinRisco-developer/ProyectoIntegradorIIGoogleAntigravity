@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './guards/admin.guard';
 import { authGuard } from './guards/auth.guard';
+import { vendedorGuard } from './guards/vendedor.guard';
 
 export const routes: Routes = [
   // =====================================================
@@ -122,6 +123,15 @@ export const routes: Routes = [
     path: 'admin/categorias',
     canActivate: [adminGuard],
     loadComponent: () => import('./inventario/categoria/categoria.component').then(m => m.CategoriaComponent)
+  },
+
+  // =====================================================
+  // Módulo Ventas (Vendedor)
+  // =====================================================
+  {
+    path: 'recojo-producto',
+    canActivate: [vendedorGuard],
+    loadComponent: () => import('./vendedor/recojo-producto/recojo-producto.component').then(m => m.RecojoProductoComponent)
   },
 
   // =====================================================

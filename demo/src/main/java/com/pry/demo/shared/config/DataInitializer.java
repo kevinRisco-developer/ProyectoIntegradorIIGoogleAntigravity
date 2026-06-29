@@ -2,9 +2,11 @@ package com.pry.demo.shared.config;
 
 import com.pry.demo.shared.model.Categoria;
 import com.pry.demo.shared.model.Producto;
+import com.pry.demo.shared.model.Rol;
 import com.pry.demo.shared.model.Usuario;
 import com.pry.demo.shared.repository.CategoriaRepository;
 import com.pry.demo.shared.repository.ProductoRepository;
+import com.pry.demo.shared.repository.RolRepository;
 import com.pry.demo.shared.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -25,6 +27,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private CategoriaRepository categoriaRepository;
+
+    @Autowired
+    private RolRepository rolRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -53,7 +58,17 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println(">>> [DEBUG] SEED: Usuario Admin creado.");
         }
 
-        // 2. Asegurar Categorías
+        // 2. Asegurar roles base: ADMIN, VENDEDOR, CLIENTE
+        for (String nombreRol : new String[]{"ADMIN", "VENDEDOR", "CLIENTE"}) {
+            if (rolRepository.findByNombre(nombreRol).isEmpty()) {
+                Rol rol = new Rol();
+                rol.setNombre(nombreRol);
+                rolRepository.save(rol);
+                System.out.println(">>> [DEBUG] SEED: Rol '" + nombreRol + "' creado.");
+            }
+        }
+
+        // 3. Asegurar Categorías
         String[] catNames = {"Hardware", "Dispositivos móviles", "Software y licencias", "Relojes inteligentes"};
         for (String name : catNames) {
             boolean exists = categoriaRepository.findAll().stream().anyMatch(c -> c.getNombre().trim().equalsIgnoreCase(name.trim()));
