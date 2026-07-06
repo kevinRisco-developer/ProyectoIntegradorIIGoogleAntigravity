@@ -150,6 +150,14 @@ import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
                 </div>
 
                 <div>
+                  <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#64748b">Marca</label>
+                  <input type="text" formControlName="marca"
+                         class="w-full rounded-xl py-3 px-4 text-sm outline-none"
+                         style="background:#060b14;border:1.5px solid #1e2d40;color:#e2e8f0"
+                         placeholder="Ej. Lenovo, Sony, Nike">
+                </div>
+
+                <div>
                   <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#64748b">Categoría *</label>
                   <select formControlName="id_categoria"
                           class="w-full rounded-xl py-3 px-4 text-sm outline-none"
@@ -300,6 +308,7 @@ export class ProductoComponent implements OnInit {
       descripcion: [''],
       precio: [0, [Validators.required, Validators.min(0.01)]],
       descuento: [0, [Validators.min(0), Validators.max(100)]],
+      marca: [''],
       stock: [0, [Validators.required, Validators.min(0)]],
       id_categoria: [1, Validators.required],
       imagen_url: ['', Validators.required],

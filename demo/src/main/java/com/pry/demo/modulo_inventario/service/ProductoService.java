@@ -48,10 +48,10 @@ public class ProductoService {
 
         return results.stream().map(result -> {
             try {
-                // Procedure columns (after adding descuento to producto):
+                // Procedure columns (after adding marca to producto):
                 // [0] id_producto, [1] nombre, [2] descripcion, [3] precio, [4] stock
-                // [5] id_categoria, [6] imagen_url, [7] estado(bool), [8] descuento
-                // [9] id_categoria(cat), [10] nombre(cat), [11] estado(cat,bool)
+                // [5] id_categoria, [6] imagen_url, [7] estado(bool), [8] descuento, [9] marca
+                // [10] id_categoria(cat), [11] nombre(cat), [12] estado(cat,bool)
                 Long id = Long.valueOf(result[0].toString());
                 String nombre = result[1] != null ? result[1].toString() : "";
                 String descripcion = result[2] != null ? result[2].toString() : "";
@@ -61,10 +61,11 @@ public class ProductoService {
                 String img = result[6] != null ? result[6].toString() : "";
                 int estado = result[7] != null ? parseBoolOrInt(result[7].toString()) : 1;
                 double descuento = result[8] != null ? Double.parseDouble(result[8].toString()) : 0.0;
-                String catNombre = result[10] != null ? result[10].toString() : "";
-                int catEstado = result[11] != null ? parseBoolOrInt(result[11].toString()) : 1;
+                String marca = result[9] != null ? result[9].toString() : "";
+                String catNombre = result[11] != null ? result[11].toString() : "";
+                int catEstado = result[12] != null ? parseBoolOrInt(result[12].toString()) : 1;
 
-                return new ProductoCategoriaDTO(id, nombre, descripcion, precio, stock, idCat, img, estado, descuento, catNombre, catEstado);
+                return new ProductoCategoriaDTO(id, nombre, descripcion, precio, stock, idCat, img, estado, descuento, marca, catNombre, catEstado);
             } catch (Exception e) {
                 System.err.println("Error mapping product category row: " + e.getMessage());
                 return null;
@@ -127,6 +128,7 @@ public class ProductoService {
         producto.setImagen_url(details.getImagen_url());
         producto.setEstado(details.getEstado());
         producto.setDescuento(details.getDescuento());
+        producto.setMarca(details.getMarca());
 
         return productoRepository.save(producto);
     }

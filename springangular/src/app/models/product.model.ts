@@ -8,6 +8,7 @@ export interface Product {
   imagen_url: string;
   estado: number;
   descuento?: number;
+  marca?: string;
 }
 
 export interface ProductoDetalle extends Product {

@@ -23,6 +23,7 @@ springangular/*.log
 python_service/venv/
 python_service/.env
 python_service/.pytest_cache/
+python_service/models_store/
 
 # Security (Universal)
 **/.env

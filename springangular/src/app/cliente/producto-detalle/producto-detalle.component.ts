@@ -1,11 +1,13 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subscription, timer } from 'rxjs';
 import { ProductService } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
 import { ResenaService } from '../../services/resena.service';
 import { AuthService } from '../../services/auth.service';
+import { HistorialService } from '../../services/historial.service';
 import { ProductoDetalle, Category, ResenaResumen, ResenaEstado } from '../../models/product.model';
 
 @Component({
@@ -297,8 +299,13 @@ import { ProductoDetalle, Category, ResenaResumen, ResenaEstado } from '../../mo
     </div>
   `
 })
-export class ProductoDetalleComponent implements OnInit {
+export class ProductoDetalleComponent implements OnInit, OnDestroy {
   fallback = 'https://placehold.co/600x600/0d1728/38bdf8?text=Producto';
+
+  // Segundos de permanencia que disparan el evento VIEW.
+  private readonly PERMANENCIA_UMBRAL = 5;
+  // Temporizador de permanencia (RxJS timer). Se cancela al salir o cambiar de producto.
+  private permanenciaSub?: Subscription;
 
   product = signal<ProductoDetalle | null>(null);
   selectedImg = signal<string>('');
@@ -323,6 +330,7 @@ export class ProductoDetalleComponent implements OnInit {
     private cartService: CartService,
     private resenaService: ResenaService,
     public authService: AuthService,
+    private historialService: HistorialService,
     private fb: FormBuilder
   ) {
     this.reviewForm = this.fb.group({
@@ -351,10 +359,52 @@ export class ProductoDetalleComponent implements OnInit {
   loadProduct(id: number) {
     this.loading.set(true);
     this.selectedImg.set('');
+    // Cancelar el temporizador de un producto anterior (navegación entre detalles).
+    this.cancelarPermanenciaTimer();
     this.productService.getPublicProductDetail(id).subscribe({
-      next: (p) => { this.product.set(p); this.loading.set(false); this.loadResenas(id); },
+      next: (p) => {
+        this.product.set(p);
+        this.loading.set(false);
+        this.loadResenas(id);
+        // Evento CLICK: el usuario abrió el detalle del producto.
+        this.trackEvento(id, 'CLICK', 0);
+        // Temporizador de permanencia: VIEW si permanece >= 5s en el módulo.
+        this.iniciarPermanenciaTimer(id);
+      },
       error: (err) => { console.error('Error loading product detail', err); this.product.set(null); this.loading.set(false); }
     });
+  }
+
+  /**
+   * Arranca el temporizador de permanencia con RxJS timer.
+   * Dispara el evento VIEW exactamente a los 5 segundos de estar en el detalle.
+   */
+  private iniciarPermanenciaTimer(idProducto: number) {
+    this.cancelarPermanenciaTimer();
+    this.permanenciaSub = timer(this.PERMANENCIA_UMBRAL * 1000).subscribe(() => {
+      this.trackEvento(idProducto, 'VIEW', this.PERMANENCIA_UMBRAL);
+    });
+  }
+
+  private cancelarPermanenciaTimer() {
+    this.permanenciaSub?.unsubscribe();
+    this.permanenciaSub = undefined;
+  }
+
+  /**
+   * Envía un evento de comportamiento al servicio de historial.
+   * Solo para usuarios autenticados (el endpoint requiere sesión); silencioso ante errores.
+   */
+  private trackEvento(idProducto: number, accion: 'VIEW' | 'CLICK' | 'ADD_CART', permanencia: number) {
+    if (!this.authService.isLoggedIn()) return;
+    this.historialService.registrarEvento(idProducto, accion, permanencia).subscribe({
+      next: () => {},
+      error: () => {}
+    });
+  }
+
+  ngOnDestroy() {
+    this.cancelarPermanenciaTimer();
   }
 
   loadResenas(id: number) {
@@ -446,6 +496,9 @@ export class ProductoDetalleComponent implements OnInit {
     }
     this.addedToCart = true;
     setTimeout(() => this.addedToCart = false, 3000);
+
+    // Evento ADD_CART: el usuario agregó el producto al carrito.
+    this.trackEvento(p.id_producto!, 'ADD_CART', 0);
 
     if (buyNow) this.router.navigate(['/checkout']);
   }

@@ -10,13 +10,14 @@ public class ProductoCategoriaDTO {
     private String imagen_url;
     private int estado;
     private double descuento;
+    private String marca;
     private String nombre_categoria;
     private int estado_categoria;
 
     public ProductoCategoriaDTO() {}
 
 
-    public ProductoCategoriaDTO(Long id_producto, String nombre, String descripcion, double precio, int stock, int id_categoria, String imagen_url, int estado, double descuento, String nombre_categoria, int estado_categoria) {
+    public ProductoCategoriaDTO(Long id_producto, String nombre, String descripcion, double precio, int stock, int id_categoria, String imagen_url, int estado, double descuento, String marca, String nombre_categoria, int estado_categoria) {
         this.id_producto = id_producto;
         this.nombre = nombre;
         this.descripcion = descripcion;
@@ -26,6 +27,7 @@ public class ProductoCategoriaDTO {
         this.imagen_url = imagen_url;
         this.estado = estado;
         this.descuento = descuento;
+        this.marca = marca;
         this.nombre_categoria = nombre_categoria;
         this.estado_categoria = estado_categoria;
     }
@@ -100,6 +102,14 @@ public class ProductoCategoriaDTO {
 
     public void setDescuento(double descuento) {
         this.descuento = descuento;
+    }
+
+    public String getMarca() {
+        return marca;
+    }
+
+    public void setMarca(String marca) {
+        this.marca = marca;
     }
 
     public String getNombre_categoria() {

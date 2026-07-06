@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/producto/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/categoria/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/producto/destacados").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/recomendacion/public").permitAll()
                         .requestMatchers(HttpMethod.GET, "/producto/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/categoria/**").permitAll()
                         // Reseñas: la lista de un producto es pública; crear/estado solo CLIENTE
@@ -66,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers("/pago/**").hasAuthority("ADMIN")
                         .requestMatchers("/mfa/**").authenticated()
                         .requestMatchers("/recomendacion/**").authenticated()
+                        .requestMatchers("/api/historial/**").authenticated()
                         .anyRequest().authenticated());
                         
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

@@ -54,6 +54,15 @@ public class RecomendacionController {
     }
 
     /**
+     * Recomendaciones para visitantes anónimos (landing/categorías sin sesión).
+     * Popularidad desde la IA; no se persiste (no hay usuario).
+     */
+    @GetMapping("/public")
+    public ResponseEntity<?> getPublicRecommendations() {
+        return ResponseEntity.ok(recomendacionService.getPublicProducts());
+    }
+
+    /**
      * Enviar ofertas personalizadas por email al usuario autenticado.
      */
     @PostMapping("/send-offers")

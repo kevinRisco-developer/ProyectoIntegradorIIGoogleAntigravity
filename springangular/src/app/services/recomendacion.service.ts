@@ -22,6 +22,11 @@ export class RecomendacionService {
     return this.http.get<any[]>(`${this.apiUrl}/smart`, { headers: this.getHeaders() });
   }
 
+  /** Recomendaciones para visitantes anónimos (sin sesión) — popularidad. */
+  getPublicRecommendations(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/public`);
+  }
+
   sendOffers(): Observable<any> {
     return this.http.post(`${this.apiUrl}/send-offers`, {}, { headers: this.getHeaders() });
   }

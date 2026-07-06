@@ -166,9 +166,14 @@ export class RecomendacionesComponent implements OnInit {
   getAccionClass(accion: string): string {
     switch (accion?.toUpperCase()) {
       case 'VIEW':
-        return 'bg-blue-950/20 border-blue-900/40 text-blue-400';
       case 'STAY':
+        return 'bg-blue-950/20 border-blue-900/40 text-blue-400';
+      case 'CLICK':
+        return 'bg-slate-800/40 border-slate-700 text-slate-300';
+      case 'ADD_CART':
         return 'bg-amber-950/20 border-amber-900/40 text-amber-400';
+      case 'PURCHASE':
+        return 'bg-emerald-950/20 border-emerald-900/40 text-emerald-400';
       default:
         return 'bg-slate-900 border-slate-700 text-slate-400';
     }

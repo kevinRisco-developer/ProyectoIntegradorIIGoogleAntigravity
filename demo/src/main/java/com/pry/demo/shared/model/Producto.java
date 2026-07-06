@@ -40,6 +40,9 @@ public class Producto {
     @Max(value = 100, message = "El descuento no puede ser mayor al 100%")
     private double descuento;
 
+    // Marca comercial del producto (usada por el pipeline de recomendaciones IA).
+    private String marca;
+
     public Long getId_producto() {
         return id_producto;
     }
@@ -110,5 +113,13 @@ public class Producto {
 
     public void setDescuento(double descuento) {
         this.descuento = descuento;
+    }
+
+    public String getMarca() {
+        return marca;
+    }
+
+    public void setMarca(String marca) {
+        this.marca = marca;
     }
 }

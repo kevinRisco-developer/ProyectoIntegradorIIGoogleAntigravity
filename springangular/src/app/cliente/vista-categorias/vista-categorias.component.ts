@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ProductService } from '../../services/product.service';
 import { Category, Product } from '../../models/product.model';
 import { RouterLink } from '@angular/router';
+import { RecomendacionesWidgetComponent } from '../recomendaciones/recomendaciones-widget.component';
 
 @Component({
   selector: 'app-vista-categorias',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, RecomendacionesWidgetComponent],
   template: `
     <div class="min-h-screen bg-slate-950 text-white font-sans py-16 px-6">
       <div class="max-w-6xl mx-auto">
@@ -41,6 +42,11 @@ import { RouterLink } from '@angular/router';
               <span class="material-symbols-outlined text-xs">arrow_forward</span>
             </div>
           </div>
+        </div>
+
+        <!-- Modulo de recomendaciones IA (Signals + Tailwind) -->
+        <div class="mt-16">
+          <app-recomendaciones-widget titulo="Recomendado para ti"></app-recomendaciones-widget>
         </div>
       </div>
     </div>

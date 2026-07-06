@@ -1,6 +1,7 @@
 package com.pry.demo.modulo_ventas.service;
 
 import com.pry.demo.modulo_integraciones.service.EmailService;
+import com.pry.demo.modulo_recomendacion.service.HistorialService;
 import com.pry.demo.modulo_ventas.enums.EstadoPedido;
 import com.pry.demo.shared.model.*;
 import com.pry.demo.shared.repository.*;
@@ -26,6 +27,7 @@ public class PedidoService {
     @Autowired private ProductoRepository productoRepository;
     @Autowired private EmailService emailService;
     @Autowired private PagoService pagoService;
+    @Autowired private HistorialService historialService;
 
     /**
      * Crea un pedido para el usuario autenticado.
@@ -109,6 +111,16 @@ public class PedidoService {
         pagoService.procesarPagoSimulado(pedidoGuardado.getId_pedido(), total, pedidoRequest.getMetodoPago());
         pedidoGuardado.setEstado(EstadoPedido.PAGADO);
         pedidoRepository.save(pedidoGuardado);
+
+        // Registrar la compra en el historial de comportamiento (señal PURCHASE para la IA).
+        // No crítico: un fallo aquí no debe abortar el checkout.
+        try {
+            for (Detalle_pedido d : detallesParaGuardar) {
+                historialService.registrar(user.getId_usuario(), d.getId_producto(), "PURCHASE", 0);
+            }
+        } catch (Exception e) {
+            System.err.println("[WARN] No se pudo registrar el evento PURCHASE en historial: " + e.getMessage());
+        }
 
         // Limpiar el carrito del usuario
         carritoDetalleRepository.deleteAll(carritoItems);
