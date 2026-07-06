@@ -20,9 +20,13 @@ import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class AuthService {
+
+    // Roles para los que el MFA es OBLIGATORIO (HU-03/17/26). VENDEDOR queda exento.
+    private static final Set<String> MFA_REQUIRED_ROLES = Set.of("ADMIN", "INVENTARIO", "CLIENTE");
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -50,14 +54,27 @@ public class AuthService {
             throw new IllegalArgumentException("Contraseña incorrecta");
         }
 
+        String role = getUserRoleName(user.getId_usuario());
+
+        // 1) MFA ya activo → exigir código TOTP antes de emitir tokens.
         if (user.isMfaEnabled()) {
-            return new LoginResponseDTO(null, null, null, user.getId_usuario(), true, user.getEmail());
+            LoginResponseDTO res = new LoginResponseDTO(null, null, null, user.getId_usuario(), true, user.getEmail());
+            res.setRole(role);
+            return res;
         }
 
-        String role = getUserRoleName(user.getId_usuario());
-        String token = jwtUtil.generateToken(user.getEmail(), role);
+        // 2) MFA obligatorio por rol pero aún no enrolado → forzar configuración.
+        //    Emitimos un access token de corta duración para que el usuario pueda
+        //    llamar a /mfa/setup y /mfa/enable; el frontend bloquea toda otra navegación.
+        if (MFA_REQUIRED_ROLES.contains(role)) {
+            String setupToken = jwtUtil.generateToken(user.getEmail(), role);
+            LoginResponseDTO res = new LoginResponseDTO(
+                    setupToken, null, role, user.getNombre(), user.getId_usuario(), false, true, user.getEmail());
+            return res;
+        }
 
-        return new LoginResponseDTO(token, role, user.getNombre(), user.getId_usuario(), false, user.getEmail());
+        // 3) Rol sin MFA obligatorio y sin MFA activo → login normal con access + refresh.
+        return buildTokenResponse(user, role);
     }
 
     public LoginResponseDTO loginMfa(MfaRequestDTO request) throws Exception {
@@ -73,9 +90,39 @@ public class AuthService {
         }
 
         String role = getUserRoleName(user.getId_usuario());
-        String token = jwtUtil.generateToken(user.getEmail(), role);
+        return buildTokenResponse(user, role);
+    }
 
-        return new LoginResponseDTO(token, role, user.getNombre(), user.getId_usuario(), false, user.getEmail());
+    /**
+     * Renueva el access token de forma silenciosa a partir de un refresh token válido (endpoint /auth/refresh).
+     */
+    public LoginResponseDTO refreshAccessToken(String refreshToken) {
+        if (refreshToken == null || !jwtUtil.validateRefreshToken(refreshToken)) {
+            throw new IllegalArgumentException("Refresh token inválido o expirado");
+        }
+
+        String email = jwtUtil.extractUsername(refreshToken);
+        Usuario user = usuarioRepository.findByEmail(email);
+        if (user == null) {
+            throw new IllegalArgumentException("Usuario no encontrado");
+        }
+
+        String role = getUserRoleName(user.getId_usuario());
+        String newAccessToken = jwtUtil.generateToken(email, role);
+
+        LoginResponseDTO res = new LoginResponseDTO(
+                newAccessToken, refreshToken, role, user.getNombre(), user.getId_usuario(), false, false, user.getEmail());
+        return res;
+    }
+
+    /**
+     * Construye la respuesta de login exitosa con access token + refresh token.
+     */
+    private LoginResponseDTO buildTokenResponse(Usuario user, String role) {
+        String token = jwtUtil.generateToken(user.getEmail(), role);
+        String refreshToken = jwtUtil.generateRefreshToken(user.getEmail(), role);
+        return new LoginResponseDTO(
+                token, refreshToken, role, user.getNombre(), user.getId_usuario(), false, false, user.getEmail());
     }
 
     public Usuario register(Usuario request) {

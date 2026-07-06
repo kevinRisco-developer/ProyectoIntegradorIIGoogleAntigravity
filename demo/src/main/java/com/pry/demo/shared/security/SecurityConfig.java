@@ -31,15 +31,25 @@ public class SecurityConfig {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Sin autenticación válida (token ausente/expirado/inválido) → 401, no 403,
+                // para que el frontend refresque el JWT de forma silenciosa. El 403 queda
+                // reservado a "autenticado pero sin permiso" (rol incorrecto).
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) ->
+                        response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "No autenticado")))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // Endpoints públicos del catálogo (HU-05, HU-06, HU-07, HU-08, HU-09)
+                        .requestMatchers(HttpMethod.GET, "/producto/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/categoria/public/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/producto/destacados").permitAll()
                         .requestMatchers(HttpMethod.GET, "/producto/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/categoria/**").permitAll()
                         .requestMatchers("/admin/auditoria/**").hasAnyAuthority("ADMIN", "INVENTARIO")
                         .requestMatchers("/admin/backup/**").hasAuthority("ADMIN")
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/usuario/**").hasAuthority("ADMIN")
+                        // CRUD inventario — solo INVENTARIO o ADMIN
                         .requestMatchers(HttpMethod.POST, "/producto/**").hasAnyAuthority("ADMIN", "INVENTARIO")
                         .requestMatchers(HttpMethod.PUT, "/producto/**").hasAnyAuthority("ADMIN", "INVENTARIO")
                         .requestMatchers(HttpMethod.DELETE, "/producto/**").hasAnyAuthority("ADMIN", "INVENTARIO")

@@ -41,8 +41,12 @@ public class CarritoController {
     public ResponseEntity<?> addItem(@RequestBody Carrito_detalle item) {
         Usuario user = getAuthenticatedUser();
         if (user == null) return ResponseEntity.status(401).body("No autenticado");
-        carritoService.addItem(user, item);
-        return ResponseEntity.ok(Map.of("message", "Producto añadido al carrito"));
+        try {
+            carritoService.addItem(user, item);
+            return ResponseEntity.ok(Map.of("message", "Producto añadido al carrito"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PostMapping("/sync")
@@ -57,8 +61,12 @@ public class CarritoController {
     public ResponseEntity<?> updateItem(@PathVariable Long idProducto, @RequestBody CarritoItemDTO request) {
         Usuario user = getAuthenticatedUser();
         if (user == null) return ResponseEntity.status(401).body("No autenticado");
-        carritoService.updateItemCantidad(user, idProducto, request.getCantidad());
-        return ResponseEntity.ok(Map.of("message", "Cantidad actualizada"));
+        try {
+            carritoService.updateItemCantidad(user, idProducto, request.getCantidad());
+            return ResponseEntity.ok(Map.of("message", "Cantidad actualizada"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @DeleteMapping("/item/{idProducto}")

@@ -8,59 +8,66 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
-    <aside *ngIf="isAdmin()" class="w-64 bg-slate-900 border-r border-slate-800 text-slate-300 min-h-screen p-6 font-sans">
+    <aside *ngIf="authService.isInternalRole()" class="w-64 bg-slate-900 border-r border-slate-800 text-slate-300 min-h-screen p-6 font-sans">
       <div class="mb-8">
-        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Módulos Administrativos</h3>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Módulos del Sistema</h3>
+        <p class="text-[11px] text-slate-600 mt-1">Rol: {{ authService.getRole() }}</p>
       </div>
-      
+
       <nav class="space-y-2">
-        <a routerLink="/admin" routerLinkActive="bg-blue-600 text-white" [routerLinkActiveOptions]="{exact: true}" 
+        <a routerLink="/admin" routerLinkActive="bg-blue-600 text-white" [routerLinkActiveOptions]="{exact: true}"
            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
           <span class="material-symbols-outlined text-blue-400">dashboard</span>
           <span>Dashboard</span>
         </a>
 
-        <a routerLink="/admin/usuarios" routerLinkActive="bg-blue-600 text-white" 
+        <a *ngIf="authService.isAdmin()" routerLink="/admin/usuarios" routerLinkActive="bg-blue-600 text-white"
            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
           <span class="material-symbols-outlined text-purple-400">group</span>
           <span>Gestión de Usuarios</span>
         </a>
 
-        <a routerLink="/admin/productos" routerLinkActive="bg-blue-600 text-white" 
+        <a *ngIf="canInventory()" routerLink="/admin/productos" routerLinkActive="bg-blue-600 text-white"
            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
           <span class="material-symbols-outlined text-emerald-400">inventory_2</span>
           <span>Productos</span>
         </a>
 
-        <a routerLink="/admin/categorias" routerLinkActive="bg-blue-600 text-white" 
+        <a *ngIf="canInventory()" routerLink="/admin/categorias" routerLinkActive="bg-blue-600 text-white"
            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
           <span class="material-symbols-outlined text-teal-400">category</span>
           <span>Categorías</span>
         </a>
 
-        <a routerLink="/admin/backup" routerLinkActive="bg-blue-600 text-white" 
+        <a *ngIf="authService.isVendedor()" routerLink="/recojo-producto" routerLinkActive="bg-blue-600 text-white"
+           class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
+          <span class="material-symbols-outlined text-cyan-400">local_shipping</span>
+          <span>Recojo de Productos</span>
+        </a>
+
+        <a *ngIf="authService.isAdmin()" routerLink="/admin/backup" routerLinkActive="bg-blue-600 text-white"
            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
           <span class="material-symbols-outlined text-amber-400">backup</span>
           <span>Backups de BD</span>
         </a>
 
-        <div class="pt-6 my-4 border-t border-slate-800">
+        <div *ngIf="canAudit()" class="pt-6 my-4 border-t border-slate-800">
           <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Auditorías</h4>
         </div>
 
-        <a routerLink="/admin/auditoria/usuarios" routerLinkActive="bg-blue-600 text-white" 
+        <a *ngIf="canAudit()" routerLink="/admin/auditoria/usuarios" routerLinkActive="bg-blue-600 text-white"
            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
           <span class="material-symbols-outlined text-rose-400">shield_person</span>
           <span>Auditoría Usuarios</span>
         </a>
 
-        <a routerLink="/admin/auditoria/productos" routerLinkActive="bg-blue-600 text-white" 
+        <a *ngIf="canAudit()" routerLink="/admin/auditoria/productos" routerLinkActive="bg-blue-600 text-white"
            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
           <span class="material-symbols-outlined text-rose-400">manage_search</span>
           <span>Auditoría Productos</span>
         </a>
 
-        <a routerLink="/admin/auditoria/categorias" routerLinkActive="bg-blue-600 text-white" 
+        <a *ngIf="canAudit()" routerLink="/admin/auditoria/categorias" routerLinkActive="bg-blue-600 text-white"
            class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-sm font-medium">
           <span class="material-symbols-outlined text-rose-400">policy</span>
           <span>Auditoría Categorías</span>
@@ -75,9 +82,15 @@ import { AuthService } from '../../services/auth.service';
   `]
 })
 export class SidebarComponent {
-  constructor(private authService: AuthService) {}
+  constructor(public authService: AuthService) {}
 
-  isAdmin(): boolean {
-    return this.authService.isAdmin();
+  // ADMIN e INVENTARIO gestionan inventario.
+  canInventory(): boolean {
+    return this.authService.isAdmin() || this.authService.isInventario();
+  }
+
+  // ADMIN e INVENTARIO ven auditorías (coincide con la autorización del backend).
+  canAudit(): boolean {
+    return this.authService.isAdmin() || this.authService.isInventario();
   }
 }

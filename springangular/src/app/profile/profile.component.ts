@@ -7,7 +7,7 @@ import { QRCodeComponent } from 'angularx-qrcode';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, QRCodeComponent],
   templateUrl: './profile.component.html'
 })
 export class ProfileComponent implements OnInit {

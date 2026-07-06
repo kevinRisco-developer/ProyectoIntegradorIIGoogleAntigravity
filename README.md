@@ -1,3 +1,10 @@
+id  email                   rol             contrasena
+1   kevin_risco@gmail.com   admin (1)       R025520or.17
+2   maria.lopez@gmail.com   cliente (2)     R025520or.17
+5   andres.vega@gmail.com   vendedor (4)    R025520or.17
+15  inventario@gmail.com    inventario (3)  R025520or.17
+
+
 # ImportSmart: E-commerce con IA Integrada 🚀
 
 Este es un sistema de comercio electrónico avanzado diseñado en una arquitectura de microservicios y servicios distribuidos. El proyecto combina la robustez de **Spring Boot**, la dinamismo de **Angular** y la inteligencia de **Python (FastAPI)** para ofrecer recomendaciones personalizadas en tiempo real.

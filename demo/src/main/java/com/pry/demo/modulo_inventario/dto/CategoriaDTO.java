@@ -1,19 +1,17 @@
-package com.pry.demo.shared.model;
+package com.pry.demo.modulo_inventario.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-@Entity
-@Table(name = "categoria")
-public class Categoria {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class CategoriaDTO {
     private Long id_categoria;
     private String nombre;
     private int estado;
+
+    public CategoriaDTO() {}
+
+    public CategoriaDTO(Long id_categoria, String nombre, int estado) {
+        this.id_categoria = id_categoria;
+        this.nombre = nombre;
+        this.estado = estado;
+    }
 
     public Long getId_categoria() {
         return id_categoria;

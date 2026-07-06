@@ -47,6 +47,20 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> request) {
+        try {
+            String refreshToken = request.get("refreshToken");
+            LoginResponseDTO response = authService.refreshAccessToken(refreshToken);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(401).body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error de servidor: " + e.getMessage());
+        }
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Usuario request) {
         try {

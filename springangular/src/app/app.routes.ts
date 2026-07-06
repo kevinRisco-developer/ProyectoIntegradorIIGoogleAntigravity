@@ -1,14 +1,16 @@
 import { Routes } from '@angular/router';
-import { adminGuard } from './guards/admin.guard';
 import { authGuard } from './guards/auth.guard';
-import { vendedorGuard } from './guards/vendedor.guard';
+import { landingGuard } from './guards/landing.guard';
+import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   // =====================================================
-  // Rutas Públicas
+  // Rutas Públicas / Tienda del Cliente
+  // (visitantes y CLIENTE; los roles internos se redirigen a su panel)
   // =====================================================
   {
     path: '',
+    canActivate: [landingGuard],
     loadComponent: () => import('./home/home.component').then(m => m.HomeComponent)
   },
 
@@ -24,6 +26,10 @@ export const routes: Routes = [
     loadComponent: () => import('./autenticacion/mfa/mfa.component').then(m => m.MfaComponent)
   },
   {
+    path: 'login/mfa-setup',
+    loadComponent: () => import('./autenticacion/mfa-setup/mfa-setup.component').then(m => m.MfaSetupComponent)
+  },
+  {
     path: 'register',
     loadComponent: () => import('./autenticacion/registro/registro.component').then(m => m.RegistroComponent)
   },
@@ -31,20 +37,28 @@ export const routes: Routes = [
     path: 'recuperar',
     loadComponent: () => import('./autenticacion/olvide-contrasena/olvide-contrasena.component').then(m => m.OlvideContrasenaComponent)
   },
+  {
+    path: 'auth/reset-password',
+    loadComponent: () => import('./autenticacion/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
+  },
 
   // =====================================================
   // Módulo Cliente (catálogo, productos, pedidos)
+  // Catálogo público solo para visitantes y CLIENTE
   // =====================================================
   {
     path: 'catalogo',
+    canActivate: [landingGuard],
     loadComponent: () => import('./cliente/vista-productos/vista-productos.component').then(m => m.VistaProductosComponent)
   },
   {
     path: 'categorias',
+    canActivate: [landingGuard],
     loadComponent: () => import('./cliente/vista-categorias/vista-categorias.component').then(m => m.VistaCategoriasComponent)
   },
   {
     path: 'producto/:id',
+    canActivate: [landingGuard],
     loadComponent: () => import('./cliente/producto-detalle/producto-detalle.component').then(m => m.ProductoDetalleComponent)
   },
   {
@@ -69,7 +83,7 @@ export const routes: Routes = [
   },
 
   // =====================================================
-  // Módulo Perfil de Usuario
+  // Módulo Perfil de Usuario (cualquier usuario autenticado)
   // =====================================================
   {
     path: 'profile',
@@ -78,59 +92,68 @@ export const routes: Routes = [
   },
 
   // =====================================================
-  // Módulo Administración (requiere ADMIN)
+  // Panel del sistema (roles internos)
   // =====================================================
   {
     path: 'admin',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN', 'VENDEDOR', 'INVENTARIO'] },
     loadComponent: () => import('./administracion/dashboard-admin/dashboard-admin.component').then(m => m.DashboardAdminComponent)
   },
   {
     path: 'admin/usuarios',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN'] },
     loadComponent: () => import('./administracion/usuario/usuario.component').then(m => m.UsuarioComponent)
   },
   {
     path: 'admin/backup',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN'] },
     loadComponent: () => import('./administracion/backup/backup.component').then(m => m.BackupComponent)
   },
   {
     path: 'admin/auditoria/usuarios',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN', 'INVENTARIO'] },
     loadComponent: () => import('./administracion/auditoria-usuario/auditoria-usuario.component').then(m => m.AuditoriaUsuarioComponent)
   },
   {
     path: 'admin/auditoria/productos',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN', 'INVENTARIO'] },
     loadComponent: () => import('./administracion/auditoria-producto/auditoria-producto.component').then(m => m.AuditoriaProductoComponent)
   },
   {
     path: 'admin/auditoria/categorias',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN', 'INVENTARIO'] },
     loadComponent: () => import('./administracion/auditoria-categoria/auditoria-categoria.component').then(m => m.AuditoriaCategoriaComponent)
   },
 
   // =====================================================
-  // Módulo Inventario (requiere ADMIN o INVENTARIO)
+  // Módulo Inventario (ADMIN o INVENTARIO)
   // =====================================================
   {
     path: 'admin/productos',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN', 'INVENTARIO'] },
     loadComponent: () => import('./inventario/producto/producto.component').then(m => m.ProductoComponent)
   },
   {
     path: 'admin/categorias',
-    canActivate: [adminGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN', 'INVENTARIO'] },
     loadComponent: () => import('./inventario/categoria/categoria.component').then(m => m.CategoriaComponent)
   },
 
   // =====================================================
-  // Módulo Ventas (Vendedor)
+  // Módulo Ventas (VENDEDOR)
   // =====================================================
   {
     path: 'recojo-producto',
-    canActivate: [vendedorGuard],
+    canActivate: [roleGuard],
+    data: { roles: ['VENDEDOR'] },
     loadComponent: () => import('./vendedor/recojo-producto/recojo-producto.component').then(m => m.RecojoProductoComponent)
   },
 

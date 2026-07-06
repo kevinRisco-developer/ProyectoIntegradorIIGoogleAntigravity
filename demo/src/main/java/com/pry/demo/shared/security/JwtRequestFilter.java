@@ -29,7 +29,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
-                if (jwtUtil.validateToken(jwt)) {
+                // Solo aceptamos access tokens: un refresh token no debe autorizar peticiones normales.
+                if (jwtUtil.validateToken(jwt) && !"refresh".equals(jwtUtil.extractType(jwt))) {
                     username = jwtUtil.extractUsername(jwt);
                 }
             } catch (Exception e) {

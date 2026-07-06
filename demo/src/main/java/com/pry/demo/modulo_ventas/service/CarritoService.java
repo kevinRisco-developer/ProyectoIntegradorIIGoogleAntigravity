@@ -2,9 +2,11 @@ package com.pry.demo.modulo_ventas.service;
 
 import com.pry.demo.shared.model.Carrito;
 import com.pry.demo.shared.model.Carrito_detalle;
+import com.pry.demo.shared.model.Producto;
 import com.pry.demo.shared.model.Usuario;
 import com.pry.demo.shared.repository.CarritoRepository;
 import com.pry.demo.shared.repository.Carrito_detalleRepository;
+import com.pry.demo.shared.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,25 @@ public class CarritoService {
 
     @Autowired
     private Carrito_detalleRepository detalleRepository;
+
+    @Autowired
+    private ProductoRepository productoRepository;
+
+    /**
+     * Valida que la cantidad solicitada no exceda el stock disponible del producto (HU-10/11).
+     * Lanza IllegalArgumentException si el producto no existe o no hay stock suficiente.
+     */
+    private void validarStock(Long idProducto, int cantidadSolicitada) {
+        Producto producto = productoRepository.findById(idProducto)
+                .orElseThrow(() -> new IllegalArgumentException("El producto no existe"));
+        if (producto.getEstado() == 0) {
+            throw new IllegalArgumentException("El producto no está disponible");
+        }
+        if (cantidadSolicitada > producto.getStock()) {
+            throw new IllegalArgumentException(
+                    "Stock insuficiente para \"" + producto.getNombre() + "\". Disponible: " + producto.getStock());
+        }
+    }
 
     public Carrito getOrCreateCarrito(Usuario user) {
         Carrito carrito = carritoRepository.findById_usuario(user.getId_usuario());
@@ -47,9 +68,13 @@ public class CarritoService {
                 .filter(d -> d.getId_producto().equals(item.getId_producto()))
                 .findFirst();
 
+        int cantidadActual = existente.map(Carrito_detalle::getCantidad).orElse(0);
+        // Valida stock contra la cantidad TOTAL que quedaría en el carrito.
+        validarStock(item.getId_producto(), cantidadActual + item.getCantidad());
+
         if (existente.isPresent()) {
             Carrito_detalle d = existente.get();
-            d.setCantidad(d.getCantidad() + item.getCantidad());
+            d.setCantidad(cantidadActual + item.getCantidad());
             detalleRepository.save(d);
         } else {
             item.setId_carrito(carrito.getId_carrito());
@@ -104,11 +129,13 @@ public class CarritoService {
             if (cantidad <= 0) {
                 detalleRepository.delete(item);
             } else {
+                validarStock(idProducto, cantidad);
                 item.setCantidad(cantidad);
                 detalleRepository.save(item);
             }
         } else {
             if (cantidad > 0) {
+                validarStock(idProducto, cantidad);
                 Carrito_detalle item = new Carrito_detalle();
                 item.setId_carrito(carrito.getId_carrito());
                 item.setId_producto(idProducto);

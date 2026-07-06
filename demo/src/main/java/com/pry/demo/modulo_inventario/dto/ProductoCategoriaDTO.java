@@ -9,12 +9,14 @@ public class ProductoCategoriaDTO {
     private int id_categoria;
     private String imagen_url;
     private int estado;
+    private double descuento;
     private String nombre_categoria;
     private int estado_categoria;
 
     public ProductoCategoriaDTO() {}
 
-    public ProductoCategoriaDTO(Long id_producto, String nombre, String descripcion, double precio, int stock, int id_categoria, String imagen_url, int estado, String nombre_categoria, int estado_categoria) {
+
+    public ProductoCategoriaDTO(Long id_producto, String nombre, String descripcion, double precio, int stock, int id_categoria, String imagen_url, int estado, double descuento, String nombre_categoria, int estado_categoria) {
         this.id_producto = id_producto;
         this.nombre = nombre;
         this.descripcion = descripcion;
@@ -23,6 +25,7 @@ public class ProductoCategoriaDTO {
         this.id_categoria = id_categoria;
         this.imagen_url = imagen_url;
         this.estado = estado;
+        this.descuento = descuento;
         this.nombre_categoria = nombre_categoria;
         this.estado_categoria = estado_categoria;
     }
@@ -89,6 +92,14 @@ public class ProductoCategoriaDTO {
 
     public void setEstado(int estado) {
         this.estado = estado;
+    }
+
+    public double getDescuento() {
+        return descuento;
+    }
+
+    public void setDescuento(double descuento) {
+        this.descuento = descuento;
     }
 
     public String getNombre_categoria() {

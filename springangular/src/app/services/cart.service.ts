@@ -13,8 +13,21 @@ export class CartService {
   private cartItems = new BehaviorSubject<CartItem[]>([]);
   cart$ = this.cartItems.asObservable();
 
+  // Mensajes para el usuario (p. ej. stock insuficiente). El shell muestra un toast.
+  private messageSubject = new BehaviorSubject<string | null>(null);
+  message$ = this.messageSubject.asObservable();
+
   constructor(private http: HttpClient, private authService: AuthService) {
     this.initCart();
+  }
+
+  private notify(msg: string) {
+    this.messageSubject.next(msg);
+    setTimeout(() => this.messageSubject.next(null), 4000);
+  }
+
+  private snapshot(): CartItem[] {
+    return this.cartItems.value.map(i => ({ ...i }));
   }
 
   private initCart() {
@@ -43,7 +56,8 @@ export class CartService {
   }
 
   addToCart(product: Product) {
-    let current = this.cartItems.value;
+    const prev = this.snapshot();
+    const current = this.snapshot();
     const existing = current.find(i => i.id_producto === product.id_producto);
 
     if (existing) {
@@ -62,24 +76,39 @@ export class CartService {
 
     if (this.authService.isAuthenticated()) {
       const dbItem = { id_producto: product.id_producto, cantidad: 1 };
-      this.http.post(`${this.apiUrl}/carrito/add`, dbItem, { headers: this.getAuthHeaders() }).subscribe();
+      this.http.post(`${this.apiUrl}/carrito/add`, dbItem, { headers: this.getAuthHeaders() }).subscribe({
+        error: (err) => {
+          // El backend valida stock (HU-10/11): si rechaza, revertimos y avisamos.
+          this.cartItems.next(prev);
+          this.notify(err?.error?.message || 'No se pudo agregar el producto al carrito');
+        }
+      });
     }
   }
 
   updateQuantity(productId: number, change: number) {
-    let current = this.cartItems.value;
-    const item = current.find(i => i.id_producto === productId);
-    if (item) {
-      item.cantidad += change;
-      if (item.cantidad <= 0) {
-        current = current.filter(i => i.id_producto !== productId);
-      }
-      this.updateState(current);
-      
-      // Sincronizar ajuste con DB si está logueado
-      if (this.authService.isAuthenticated()) {
-         // Opcional: Implementar endpoint de actualización exacta o simplemente sync
-      }
+    const prev = this.snapshot();
+    const item = this.cartItems.value.find(i => i.id_producto === productId);
+    if (!item) return;
+
+    const newQty = item.cantidad + change;
+    if (newQty <= 0) {
+      this.removeFromCart(productId);
+      return;
+    }
+
+    // Optimista: aplicamos la nueva cantidad y la sincronizamos con el backend.
+    const current = this.snapshot().map(i => i.id_producto === productId ? { ...i, cantidad: newQty } : i);
+    this.updateState(current);
+
+    if (this.authService.isAuthenticated()) {
+      this.http.put(`${this.apiUrl}/carrito/item/${productId}`, { cantidad: newQty }, { headers: this.getAuthHeaders() })
+        .subscribe({
+          error: (err) => {
+            this.cartItems.next(prev);
+            this.notify(err?.error?.message || 'No se pudo actualizar la cantidad');
+          }
+        });
     }
   }
 
@@ -131,8 +160,8 @@ export class CartService {
     return this.http.get(`${this.apiUrl}/pedido/${id}`, { headers: this.getAuthHeaders() });
   }
 
-  getMisPedidos(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/pedido/mis-pedidos`, { headers: this.getAuthHeaders() });
+  getMisPedidos(page: number = 0, size: number = 6): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/pedido/mis-pedidos?page=${page}&size=${size}`, { headers: this.getAuthHeaders() });
   }
 
   getPedidosPagados(): Observable<any[]> {

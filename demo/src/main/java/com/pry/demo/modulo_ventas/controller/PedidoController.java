@@ -4,6 +4,10 @@ import com.pry.demo.modulo_ventas.service.PedidoService;
 import com.pry.demo.shared.model.*;
 import com.pry.demo.shared.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -107,17 +111,18 @@ public class PedidoController {
     }
 
     /**
-     * GET /pedido/mis-pedidos
-     * Devuelve los pedidos del usuario autenticado.
+     * GET /pedido/mis-pedidos?page=0&size=10
+     * Historial paginado del usuario autenticado, más recientes primero (HU-14).
      */
     @GetMapping("/mis-pedidos")
-    public ResponseEntity<?> getMisPedidos() {
+    public ResponseEntity<?> getMisPedidos(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         Usuario user = getAuthenticatedUser();
         if (user == null) return ResponseEntity.status(401).body("No autenticado");
 
-        List<Pedido> pedidos = pedidoRepository.findAll().stream()
-                .filter(p -> p.getId_usuario().equals(user.getId_usuario()))
-                .toList();
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id_pedido").descending());
+        Page<Pedido> pedidos = pedidoRepository.findPedidosByUsuario(user.getId_usuario(), pageable);
         return ResponseEntity.ok(pedidos);
     }
 

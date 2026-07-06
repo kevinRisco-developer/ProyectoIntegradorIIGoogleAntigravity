@@ -1,44 +1,31 @@
-package com.pry.demo.shared.model;
+package com.pry.demo.modulo_inventario.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
-@Entity
-@Table(name = "producto")
-public class Producto {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class ProductoDetalleDTO {
     private Long id_producto;
-
-    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
-
     private String descripcion;
-
-    @DecimalMin(value = "0.01", message = "El precio debe ser mayor a cero")
     private double precio;
-
-    @Min(value = 0, message = "El stock no puede ser negativo")
     private int stock;
-
     private int id_categoria;
-
-    @NotBlank(message = "La URL de la imagen es obligatoria")
     private String imagen_url;
-
     private int estado;
-
-    @Min(value = 0, message = "El descuento no puede ser negativo")
-    @Max(value = 100, message = "El descuento no puede ser mayor al 100%")
     private double descuento;
+    private String disponibilidad;
+
+    public ProductoDetalleDTO() {}
+
+    public ProductoDetalleDTO(Long id_producto, String nombre, String descripcion, double precio, int stock, int id_categoria, String imagen_url, int estado, double descuento, String disponibilidad) {
+        this.id_producto = id_producto;
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+        this.precio = precio;
+        this.stock = stock;
+        this.id_categoria = id_categoria;
+        this.imagen_url = imagen_url;
+        this.estado = estado;
+        this.descuento = descuento;
+        this.disponibilidad = disponibilidad;
+    }
 
     public Long getId_producto() {
         return id_producto;
@@ -110,5 +97,13 @@ public class Producto {
 
     public void setDescuento(double descuento) {
         this.descuento = descuento;
+    }
+
+    public String getDisponibilidad() {
+        return disponibilidad;
+    }
+
+    public void setDisponibilidad(String disponibilidad) {
+        this.disponibilidad = disponibilidad;
     }
 }

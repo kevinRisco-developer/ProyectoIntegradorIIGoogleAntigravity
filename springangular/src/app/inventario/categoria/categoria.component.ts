@@ -1,95 +1,197 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
 import { Category } from '../../models/product.model';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-categoria-admin',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, SidebarComponent],
+  styles: [`
+    .cat-card {
+      background: #0d1728;
+      border: 1px solid #1e2d40;
+      border-radius: 1rem;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: border-color 0.25s;
+    }
+    .cat-card:hover {
+      border-color: #38bdf8;
+    }
+    .btn-action-edit {
+      flex: 1;
+      padding: 0.5rem;
+      border-radius: 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      transition: all 0.2s;
+      background: #080f1a;
+      border: 1px solid #1e2d40;
+      color: #94a3b8;
+      cursor: pointer;
+    }
+    .btn-action-edit:hover {
+      color: #38bdf8;
+      border-color: #38bdf8;
+    }
+    .btn-action-delete {
+      flex: 1;
+      padding: 0.5rem;
+      border-radius: 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      transition: all 0.2s;
+      background: #080f1a;
+      border: 1px solid #1e2d40;
+      color: #94a3b8;
+      cursor: pointer;
+    }
+    .btn-action-delete:hover:not(:disabled) {
+      color: #f87171;
+      border-color: #991b1b;
+    }
+    .btn-action-delete:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  `],
   template: `
-    <div class="min-h-screen bg-slate-950 text-white font-sans flex">
+    <div class="min-h-screen text-white font-sans flex" style="background:#060b14">
       <app-sidebar></app-sidebar>
 
-      <main class="flex-1 p-10">
-        <div class="flex justify-between items-center mb-8">
+      <main class="flex-1 p-8 overflow-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-8">
           <div>
-            <h1 class="text-3xl font-black text-blue-400">Gestión de Categorías</h1>
-            <p class="text-slate-400 text-sm mt-1">Crea, edita o elimina las categorías del catálogo de productos.</p>
+            <p class="text-xs font-bold uppercase tracking-widest mb-1" style="color:#38bdf8">Panel de Inventario</p>
+            <h1 class="text-3xl font-black" style="color:#f0f9ff">Gestión de Categorías</h1>
+            <p class="text-sm mt-1" style="color:#64748b">MapStruct · Baja lógica · Auditoría de sesión</p>
           </div>
-          <button (click)="openCreateForm()" 
-                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition-all flex items-center gap-1.5 shadow-lg shadow-blue-500/10">
+          <button (click)="openCreateForm()"
+                  class="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold"
+                  style="background:linear-gradient(135deg,#0369a1,#1e40af);color:white;border:none;cursor:pointer">
             <span class="material-symbols-outlined text-sm">add</span>
-            <span>Nueva Categoría</span>
+            Nueva Categoría
           </button>
         </div>
 
-        <!-- Formulario Modal -->
-        <div *ngIf="showForm" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-8 relative shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <h2 class="text-2xl font-bold mb-6 text-white">{{ editingId ? 'Editar Categoría' : 'Crear Categoría' }}</h2>
-            
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          <div class="rounded-2xl p-5" style="background:#0d1728;border:1px solid #1e2d40">
+            <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:#64748b">Total</p>
+            <p class="text-2xl font-black" style="color:#38bdf8">{{ categories.length }}</p>
+          </div>
+          <div class="rounded-2xl p-5" style="background:#0d1728;border:1px solid #1e2d40">
+            <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:#64748b">Activas</p>
+            <p class="text-2xl font-black" style="color:#4ade80">{{ getActiveCount() }}</p>
+          </div>
+          <div class="rounded-2xl p-5" style="background:#0d1728;border:1px solid #1e2d40">
+            <p class="text-xs font-bold uppercase tracking-wider mb-1" style="color:#64748b">Inactivas</p>
+            <p class="text-2xl font-black" style="color:#f87171">{{ getInactiveCount() }}</p>
+          </div>
+        </div>
+
+        <!-- Modal Formulario -->
+        <div *ngIf="showForm" class="fixed inset-0 z-50 flex items-center justify-center p-6" style="background:rgba(0,0,0,0.75);backdrop-filter:blur(4px)">
+          <div class="w-full max-w-md rounded-2xl p-8 shadow-2xl" style="background:#0d1728;border:1px solid #1e3a5f">
+
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-black" style="color:#f0f9ff">{{ editingId ? 'Editar Categoría' : 'Nueva Categoría' }}</h2>
+              <button (click)="closeForm()" class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:#060b14;color:#64748b;border:1px solid #1e2d40;cursor:pointer">
+                <span class="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
             <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()" class="space-y-4">
               <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nombre de Categoría</label>
-                <input type="text" formControlName="nombre" 
-                       class="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-white placeholder-slate-650 text-sm focus:outline-none"
-                       placeholder="Ej. Celulares e Inteligencia">
+                <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#64748b">Nombre *</label>
+                <input type="text" formControlName="nombre"
+                       class="w-full rounded-xl py-3 px-4 text-sm outline-none"
+                       style="background:#060b14;border:1.5px solid #1e2d40;color:#e2e8f0"
+                       placeholder="Ej: Celulares e Inteligencia">
+                <p *ngIf="categoryForm.get('nombre')?.invalid && categoryForm.get('nombre')?.touched"
+                   class="text-xs mt-1" style="color:#f87171">El nombre es obligatorio (mín. 2 caracteres)</p>
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descripción</label>
-                <textarea formControlName="descripcion" rows="3"
-                       class="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-white placeholder-slate-650 text-sm focus:outline-none"
-                       placeholder="Escribe una breve descripción para los clientes"></textarea>
+                <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color:#64748b">Estado</label>
+                <select formControlName="estado" class="w-full rounded-xl py-3 px-4 text-sm outline-none" style="background:#060b14;border:1.5px solid #1e2d40;color:#e2e8f0">
+                  <option [value]="1">Activa</option>
+                  <option [value]="0">Inactiva</option>
+                </select>
               </div>
 
-              <div class="flex justify-end gap-4 pt-6 border-t border-slate-800 mt-6">
-                <button type="button" (click)="closeForm()" 
-                        class="bg-slate-950 border border-slate-800 hover:border-slate-700 text-slate-300 font-semibold py-2.5 px-6 rounded-xl text-sm transition-all">
+              <div class="flex justify-end gap-3 pt-4" style="border-top:1px solid #1e2d40">
+                <button type="button" (click)="closeForm()"
+                        class="px-5 py-2.5 rounded-xl text-sm font-semibold"
+                        style="background:transparent;border:1px solid #1e2d40;color:#94a3b8;cursor:pointer">
                   Cancelar
                 </button>
                 <button type="submit" [disabled]="categoryForm.invalid || loadingSubmit"
-                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition-all flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-sm animate-spin" *ngIf="loadingSubmit">sync</span>
-                  <span>{{ editingId ? 'Guardar Cambios' : 'Crear Categoría' }}</span>
+                        class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold"
+                        style="background:linear-gradient(135deg,#0369a1,#1e40af);color:white;border:none;cursor:pointer"
+                        [style.opacity]="categoryForm.invalid ? '0.5' : '1'">
+                  <span *ngIf="loadingSubmit" class="material-symbols-outlined text-sm animate-spin">sync</span>
+                  {{ editingId ? 'Guardar Cambios' : 'Crear Categoría' }}
                 </button>
               </div>
             </form>
           </div>
         </div>
 
-        <!-- Tabla de Categorías -->
-        <div class="bg-slate-900 border border-slate-850 rounded-2xl overflow-hidden shadow-lg">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-950 border-b border-slate-850 text-xs font-bold uppercase tracking-wider text-slate-400">
-                <th class="p-4 pl-6">ID</th>
-                <th class="p-4">Nombre</th>
-                <th class="p-4">Descripción</th>
-                <th class="p-4 pr-6 text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-850 text-sm">
-              <tr *ngFor="let cat of categories" class="hover:bg-slate-800/20 transition-colors">
-                <td class="p-4 pl-6 font-mono text-xs text-blue-400">#{{ cat.id_categoria }}</td>
-                <td class="p-4 font-bold text-white uppercase tracking-tight">{{ cat.nombre }}</td>
-                <td class="p-4 text-slate-400 font-light">{{ cat.descripcion || 'Sin descripción.' }}</td>
-                <td class="p-4 pr-6 text-right">
-                  <div class="flex justify-end gap-2">
-                    <button (click)="openEditForm(cat)" class="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white" title="Editar">
-                      <span class="material-symbols-outlined text-sm">edit</span>
-                    </button>
-                    <button (click)="deleteCategory(cat.id_categoria)" class="p-2 hover:bg-rose-950/40 rounded-lg text-slate-400 hover:text-rose-400" title="Eliminar">
-                      <span class="material-symbols-outlined text-sm">delete</span>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Grid de Categorías -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div *ngFor="let cat of categories" class="cat-card">
+
+            <!-- Icon + Nombre -->
+            <div class="flex items-start justify-between">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:#0d2545;border:1px solid #1e4a7a">
+                <span class="material-symbols-outlined text-lg" style="color:#38bdf8">category</span>
+              </div>
+              <!-- Badge estado -->
+              <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                    [style.background]="cat.estado === 1 ? '#052e16' : '#1a1a1a'"
+                    [style.color]="cat.estado === 1 ? '#4ade80' : '#64748b'"
+                    [style.border]="cat.estado === 1 ? '1px solid #166534' : '1px solid #1e2d40'">
+                {{ cat.estado === 1 ? 'Activa' : 'Inactiva' }}
+              </span>
+            </div>
+
+            <div>
+              <h3 class="font-bold text-base" style="color:#e2e8f0">{{ cat.nombre }}</h3>
+              <p class="text-xs mt-1 font-mono" style="color:#334155">ID: {{ cat.id_categoria }}</p>
+            </div>
+
+            <!-- Acciones -->
+            <div class="flex gap-2 pt-2" style="border-top:1px solid #111827">
+              <button (click)="openEditForm(cat)" class="btn-action-edit">
+                <span class="material-symbols-outlined text-xs">edit</span> Editar
+              </button>
+              <button (click)="softDelete(cat)" [disabled]="cat.estado === 0" class="btn-action-delete">
+                <span class="material-symbols-outlined text-xs">block</span>
+                {{ cat.estado === 0 ? 'Inactiva' : 'Dar de baja' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Mensaje vacío -->
+          <div *ngIf="categories.length === 0" class="col-span-4 text-center py-16">
+            <span class="material-symbols-outlined text-5xl mb-3 block" style="color:#1e3a5f">category</span>
+            <p style="color:#475569">No hay categorías registradas aún</p>
+          </div>
         </div>
       </main>
     </div>
@@ -108,16 +210,16 @@ export class CategoriaComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {
     this.categoryForm = this.fb.group({
-      nombre: ['', Validators.required],
-      descripcion: ['']
+      nombre: ['', [Validators.required, Validators.minLength(2)]],
+      estado: [1]
     });
   }
 
   ngOnInit() {
-    this.loadData();
+    this.loadCategories();
   }
 
-  loadData() {
+  loadCategories() {
     this.productService.getCategories().subscribe(cats => {
       this.categories = cats;
       this.cdr.detectChanges();
@@ -126,13 +228,13 @@ export class CategoriaComponent implements OnInit {
 
   openCreateForm() {
     this.editingId = null;
-    this.categoryForm.reset();
+    this.categoryForm.reset({ estado: 1 });
     this.showForm = true;
   }
 
-  openEditForm(category: Category) {
-    this.editingId = category.id_categoria || null;
-    this.categoryForm.patchValue(category);
+  openEditForm(cat: Category) {
+    this.editingId = cat.id_categoria || null;
+    this.categoryForm.patchValue({ nombre: cat.nombre, estado: cat.estado ?? 1 });
     this.showForm = true;
   }
 
@@ -144,44 +246,34 @@ export class CategoriaComponent implements OnInit {
   onSubmit() {
     if (this.categoryForm.invalid) return;
     this.loadingSubmit = true;
-    const catData = this.categoryForm.value;
+
+    const payload = this.categoryForm.value;
 
     if (this.editingId) {
-      this.productService.updateCategory(this.editingId, catData).subscribe({
-        next: () => {
-          this.loadData();
-          this.closeForm();
-          this.loadingSubmit = false;
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.loadingSubmit = false;
-          this.cdr.detectChanges();
-        }
+      this.productService.updateCategory(this.editingId, payload).subscribe({
+        next: () => { this.loadCategories(); this.closeForm(); this.loadingSubmit = false; },
+        error: () => { this.loadingSubmit = false; }
       });
     } else {
-      this.productService.createCategory(catData).subscribe({
-        next: () => {
-          this.loadData();
-          this.closeForm();
-          this.loadingSubmit = false;
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.loadingSubmit = false;
-          this.cdr.detectChanges();
-        }
+      this.productService.createCategory(payload).subscribe({
+        next: () => { this.loadCategories(); this.closeForm(); this.loadingSubmit = false; },
+        error: () => { this.loadingSubmit = false; }
       });
     }
   }
 
-  deleteCategory(id: number | undefined) {
-    if (!id) return;
-    if (confirm('¿Está seguro de que desea eliminar esta categoría? Si tiene productos asignados, podría haber un conflicto.')) {
-      this.productService.deleteCategory(id).subscribe({
-        next: () => this.loadData(),
-        error: (err) => alert('No se pudo eliminar la categoría. Probablemente esté en uso.')
-      });
+  softDelete(cat: Category) {
+    if (!cat.id_categoria || cat.estado === 0) return;
+    if (confirm(`¿Dar de baja la categoría "${cat.nombre}"? Se marcará como Inactiva (baja lógica).`)) {
+      this.productService.deleteCategory(cat.id_categoria).subscribe(() => this.loadCategories());
     }
+  }
+
+  getActiveCount(): number {
+    return this.categories.filter(c => c.estado === 1).length;
+  }
+
+  getInactiveCount(): number {
+    return this.categories.filter(c => c.estado !== 1).length;
   }
 }

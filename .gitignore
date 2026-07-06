@@ -45,3 +45,4 @@ python_service/.pytest_cache/
 backend_files.txt
 frontend_files.txt
 stitch_*.html
+.claude/
