@@ -17,6 +17,10 @@ public class AuditoriaCategoria {
     private String nombre;
     private Timestamp fecha_actualizacion;
     private Long id_almacenero;
+    private String accion;
+
+    public String getAccion() { return accion; }
+    public void setAccion(String accion) { this.accion = accion; }
 
     public Long getId_auditoria_categoria() {
         return id_auditoria_categoria;

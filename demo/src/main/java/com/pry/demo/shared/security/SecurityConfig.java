@@ -45,6 +45,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/producto/destacados").permitAll()
                         .requestMatchers(HttpMethod.GET, "/producto/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/categoria/**").permitAll()
+                        // Reseñas: la lista de un producto es pública; crear/estado solo CLIENTE
+                        .requestMatchers(HttpMethod.GET, "/resena/producto/**").permitAll()
+                        .requestMatchers("/resena/**").hasAuthority("CLIENTE")
                         .requestMatchers("/admin/auditoria/**").hasAnyAuthority("ADMIN", "INVENTARIO")
                         .requestMatchers("/admin/backup/**").hasAuthority("ADMIN")
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")

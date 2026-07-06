@@ -83,6 +83,7 @@ import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
             <p class="text-xs text-slate-400 mb-6">Selecciona el nivel de acceso en el sistema para esta cuenta.</p>
             
             <div class="space-y-3">
+              <!-- ids según la tabla rol: 1 admin, 2 cliente, 3 inventario, 4 VENDEDOR -->
               <button (click)="assignRole(1)" class="w-full text-left p-4 bg-slate-950 hover:bg-slate-800 border border-slate-850 rounded-xl flex items-center gap-3 transition-all">
                 <span class="material-symbols-outlined text-amber-500">shield_person</span>
                 <div>
@@ -91,7 +92,7 @@ import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
                 </div>
               </button>
 
-              <button (click)="assignRole(2)" class="w-full text-left p-4 bg-slate-950 hover:bg-slate-800 border border-slate-850 rounded-xl flex items-center gap-3 transition-all">
+              <button (click)="assignRole(3)" class="w-full text-left p-4 bg-slate-950 hover:bg-slate-800 border border-slate-850 rounded-xl flex items-center gap-3 transition-all">
                 <span class="material-symbols-outlined text-emerald-500">inventory</span>
                 <div>
                   <span class="text-sm font-bold block text-white">Almacenero (INVENTARIO)</span>
@@ -99,7 +100,15 @@ import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
                 </div>
               </button>
 
-              <button (click)="assignRole(3)" class="w-full text-left p-4 bg-slate-950 hover:bg-slate-800 border border-slate-850 rounded-xl flex items-center gap-3 transition-all">
+              <button (click)="assignRole(4)" class="w-full text-left p-4 bg-slate-950 hover:bg-slate-800 border border-slate-850 rounded-xl flex items-center gap-3 transition-all">
+                <span class="material-symbols-outlined text-cyan-500">local_shipping</span>
+                <div>
+                  <span class="text-sm font-bold block text-white">Vendedor (VENDEDOR)</span>
+                  <span class="text-[10px] text-slate-500">Gestiona la entrega de pedidos pagados.</span>
+                </div>
+              </button>
+
+              <button (click)="assignRole(2)" class="w-full text-left p-4 bg-slate-950 hover:bg-slate-800 border border-slate-850 rounded-xl flex items-center gap-3 transition-all">
                 <span class="material-symbols-outlined text-blue-500">person</span>
                 <div>
                   <span class="text-sm font-bold block text-white">Cliente (CLIENTE)</span>
@@ -135,11 +144,10 @@ import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
                 <td class="p-4 font-bold text-white uppercase tracking-tight">{{ user.nombre }}</td>
                 <td class="p-4 text-slate-400">{{ user.email }}</td>
                 <td class="p-4">
-                  <div class="flex flex-wrap gap-1">
-                    <span *ngFor="let r of user.roles" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-900/40">
-                      {{ r }}
-                    </span>
-                  </div>
+                  <span *ngIf="user.role" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-900/40">
+                    {{ user.role }}
+                  </span>
+                  <span *ngIf="!user.role" class="text-[10px] text-slate-600 italic">Sin rol</span>
                 </td>
                 <td class="p-4">
                   <span [class]="user.estado === 1 ? 'bg-emerald-950/20 border-emerald-800 text-emerald-400' : 'bg-rose-950/20 border-rose-800 text-rose-400'" 
@@ -287,10 +295,11 @@ export class UsuarioComponent implements OnInit {
   }
 
   deleteUser(id: number) {
-    if (confirm('¿Está seguro de que desea eliminar este usuario del sistema?')) {
+    // Baja lógica: el usuario se desactiva (estado=0), no se borra físicamente.
+    if (confirm('¿Desactivar este usuario? Podrá reactivarse cambiando su estado a Activo.')) {
       this.usuarioService.deleteUsuario(id).subscribe({
         next: () => this.loadData(),
-        error: (err) => alert('No se pudo eliminar el usuario.')
+        error: (err) => alert('No se pudo desactivar el usuario.')
       });
     }
   }

@@ -1,5 +1,6 @@
 package com.pry.demo.modulo_auditoria.controller;
 
+import com.pry.demo.modulo_auditoria.util.FiltroFechas;
 import com.pry.demo.shared.model.AuditoriaCategoria;
 import com.pry.demo.shared.repository.AuditoriaCategoriaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,19 @@ public class AuditoriaCategoriaController {
     @GetMapping
     public ResponseEntity<List<AuditoriaCategoria>> getAll() {
         return ResponseEntity.ok(auditoriaCategoriaRepository.findAll());
+    }
+
+    /**
+     * Consulta filtrada por rango de fechas, responsable (id_almacenero) y tipo de acción (HU-33).
+     */
+    @GetMapping("/filtrar")
+    public ResponseEntity<List<AuditoriaCategoria>> filtrar(
+            @RequestParam(required = false) String desde,
+            @RequestParam(required = false) String hasta,
+            @RequestParam(required = false) Long responsable,
+            @RequestParam(required = false) String accion) {
+        return ResponseEntity.ok(auditoriaCategoriaRepository.filtrar(
+                FiltroFechas.desde(desde), FiltroFechas.hasta(hasta), responsable, FiltroFechas.nb(accion)));
     }
 
     /**

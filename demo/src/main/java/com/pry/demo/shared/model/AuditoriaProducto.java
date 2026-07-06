@@ -18,6 +18,18 @@ public class AuditoriaProducto {
     private double precio_pasado;
     private double precio_modificado;
     private Long id_almacenero;
+    private String accion;
+    private Integer stock_anterior;
+    private Integer stock_modificado;
+
+    public String getAccion() { return accion; }
+    public void setAccion(String accion) { this.accion = accion; }
+
+    public Integer getStock_anterior() { return stock_anterior; }
+    public void setStock_anterior(Integer stock_anterior) { this.stock_anterior = stock_anterior; }
+
+    public Integer getStock_modificado() { return stock_modificado; }
+    public void setStock_modificado(Integer stock_modificado) { this.stock_modificado = stock_modificado; }
 
     public Long getId_auditoria_producto() {
         return id_auditoria_producto;

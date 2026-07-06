@@ -31,3 +31,25 @@ export interface PagedResponse<T> {
   first: boolean;
   last: boolean;
 }
+
+export interface Resena {
+  id_resena?: number;
+  id_usuario?: number;
+  nombre_usuario?: string;
+  id_producto: number;
+  calificacion: number;
+  comentario?: string;
+  fecha?: string;
+}
+
+export interface ResenaResumen {
+  promedio: number;
+  total: number;
+  resenas: Resena[];
+}
+
+export interface ResenaEstado {
+  puede: boolean;
+  yaReseno: boolean;
+  miResena: Resena | null;
+}

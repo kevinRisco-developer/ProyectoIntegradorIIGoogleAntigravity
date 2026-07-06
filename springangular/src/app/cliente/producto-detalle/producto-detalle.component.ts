@@ -1,14 +1,17 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProductService } from '../../services/product.service';
 import { CartService } from '../../services/cart.service';
-import { ProductoDetalle, Category } from '../../models/product.model';
+import { ResenaService } from '../../services/resena.service';
+import { AuthService } from '../../services/auth.service';
+import { ProductoDetalle, Category, ResenaResumen, ResenaEstado } from '../../models/product.model';
 
 @Component({
   selector: 'app-producto-detalle',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule],
   styles: [`
     .pd-root { background:#060b14; min-height:100vh; color:#e2e8f0; font-family:'Inter',sans-serif; }
     .wrap { max-width:1180px; margin:0 auto; padding:1.5rem 1.5rem 4rem; }
@@ -58,6 +61,39 @@ import { ProductoDetalle, Category } from '../../models/product.model';
     .tech .k { color:#64748b; } .tech .v { color:#e2e8f0; font-weight:700; }
 
     .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:#052e16; border:1px solid #166534; color:#4ade80; padding:12px 22px; border-radius:12px; font-weight:700; font-size:.875rem; display:flex; align-items:center; gap:8px; z-index:60; }
+
+    /* Reseñas */
+    .rev-panel { background:#0a1220; border:1px solid #1e2d40; border-radius:18px; padding:1.75rem; }
+    .rev-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; }
+    .rev-title { font-size:1.4rem; font-weight:900; color:#f0f9ff; }
+    .rev-avg { display:flex; align-items:center; gap:.9rem; }
+    .rev-avg-num { font-size:2.4rem; font-weight:900; color:#fbbf24; line-height:1; }
+    .rev-muted { font-size:.75rem; color:#64748b; }
+    .stars.sm .material-symbols-outlined { font-size:15px; }
+
+    .rev-form { background:#0d1728; border:1px solid #1e3a5f; border-radius:14px; padding:1.25rem; margin-bottom:1.5rem; }
+    .rev-form-title { font-weight:800; color:#e2e8f0; font-size:.95rem; margin-bottom:.75rem; }
+    .star-input { display:flex; align-items:center; margin-bottom:.9rem; }
+    .star-pick { font-size:32px; color:#334155; cursor:pointer; transition:color .12s, transform .12s; }
+    .star-pick:hover { transform:scale(1.12); }
+    .star-pick.on { color:#fbbf24; }
+    .rev-textarea { width:100%; background:#060b14; border:1.5px solid #1e3a5f; border-radius:10px; padding:10px 12px; color:#e2e8f0; font-size:.85rem; outline:none; resize:vertical; }
+    .rev-textarea:focus { border-color:#38bdf8; }
+    .rev-alert { margin-top:.75rem; padding:8px 12px; border-radius:10px; font-size:.8rem; font-weight:600; }
+    .rev-alert.ok { background:#052e16; border:1px solid #166534; color:#4ade80; }
+    .rev-alert.err { background:#2d0b0b; border:1px solid #991b1b; color:#f87171; }
+    .rev-submit { margin-top:.9rem; background:linear-gradient(135deg,#0369a1,#1e40af); color:#fff; border:none; border-radius:11px; padding:10px 20px; font-weight:800; font-size:.85rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+    .rev-submit:disabled { opacity:.45; cursor:not-allowed; }
+
+    .rev-note { display:flex; align-items:center; gap:.5rem; background:#08131f; border:1px solid #1e3a5f; color:#94a3b8; border-radius:12px; padding:12px 14px; font-size:.82rem; margin-bottom:1.5rem; }
+
+    .rev-list { display:flex; flex-direction:column; gap:1rem; }
+    .rev-item { display:flex; gap:.9rem; background:#0d1728; border:1px solid #1e2d40; border-radius:12px; padding:1rem 1.1rem; }
+    .rev-avatar { width:38px; height:38px; border-radius:999px; background:#1e40af; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0; }
+    .rev-item-head { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+    .rev-item-head strong { color:#e2e8f0; font-size:.875rem; }
+    .rev-comment { color:#94a3b8; font-size:.85rem; line-height:1.6; margin-top:.35rem; }
+    .rev-empty { color:#475569; font-size:.85rem; text-align:center; padding:1.5rem; border:1px dashed #1e2d40; border-radius:12px; }
   `],
   template: `
     <div class="pd-root">
@@ -183,6 +219,77 @@ import { ProductoDetalle, Category } from '../../models/product.model';
         </div>
       </div>
 
+      <!-- ===================== RESEÑAS ===================== -->
+      <div class="wrap" *ngIf="!loading() && product() as p" style="padding-top:0">
+        <div class="rev-panel">
+          <div class="rev-head">
+            <h3 class="rev-title">Reseñas y calificación</h3>
+            <div class="rev-avg" *ngIf="resumen()">
+              <span class="rev-avg-num">{{ (resumen()!.promedio || 0) | number:'1.1-1' }}</span>
+              <div>
+                <div class="stars">
+                  <span *ngFor="let s of [1,2,3,4,5]" class="material-symbols-outlined"
+                        [class.empty]="s > round(resumen()!.promedio)"
+                        [style.font-variation-settings]="fillStyle(s <= round(resumen()!.promedio))">star</span>
+                </div>
+                <span class="rev-muted">{{ resumen()!.total }} reseña{{ resumen()!.total === 1 ? '' : 's' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulario: solo CLIENTE que compró el producto -->
+          <form *ngIf="isCliente() && estado()?.puede" [formGroup]="reviewForm" (ngSubmit)="submitResena(p.id_producto!)" class="rev-form">
+            <h4 class="rev-form-title">{{ estado()?.yaReseno ? 'Edita tu reseña' : 'Deja tu reseña' }}</h4>
+            <div class="star-input">
+              <span *ngFor="let s of [1,2,3,4,5]" class="material-symbols-outlined star-pick"
+                    [class.on]="s <= (hoverStar() || reviewForm.value.calificacion)"
+                    [style.font-variation-settings]="fillStyle(s <= (hoverStar() || reviewForm.value.calificacion))"
+                    (click)="setCalificacion(s)" (mouseenter)="hoverStar.set(s)" (mouseleave)="hoverStar.set(0)">star</span>
+              <span class="rev-muted" style="margin-left:.5rem">{{ reviewForm.value.calificacion || 0 }}/5</span>
+            </div>
+            <textarea formControlName="comentario" rows="3" placeholder="Cuéntanos tu experiencia con este producto (opcional)" class="rev-textarea"></textarea>
+            <div *ngIf="reviewMsg() === 'ok'" class="rev-alert ok">¡Reseña guardada correctamente!</div>
+            <div *ngIf="reviewMsg() && reviewMsg() !== 'ok'" class="rev-alert err">{{ reviewMsg() }}</div>
+            <button type="submit" [disabled]="reviewForm.invalid || submittingResena()" class="rev-submit">
+              <span *ngIf="submittingResena()" class="material-symbols-outlined" style="font-size:16px;animation:spin 1s linear infinite">sync</span>
+              {{ submittingResena() ? 'Guardando...' : (estado()?.yaReseno ? 'Actualizar reseña' : 'Publicar reseña') }}
+            </button>
+          </form>
+
+          <!-- Avisos cuando no puede reseñar -->
+          <div *ngIf="!isLoggedIn()" class="rev-note">
+            <span class="material-symbols-outlined" style="font-size:16px">login</span>
+            <span>Inicia sesión como cliente para dejar una reseña.</span>
+          </div>
+          <div *ngIf="isLoggedIn() && isCliente() && estado() && !estado()!.puede" class="rev-note">
+            <span class="material-symbols-outlined" style="font-size:16px">lock</span>
+            <span>Solo puedes reseñar productos que has comprado.</span>
+          </div>
+
+          <!-- Lista de reseñas -->
+          <div *ngIf="resumen() && resumen()!.resenas.length > 0" class="rev-list">
+            <div class="rev-item" *ngFor="let r of resumen()!.resenas">
+              <div class="rev-avatar">{{ (r.nombre_usuario || 'C').charAt(0).toUpperCase() }}</div>
+              <div style="flex:1;min-width:0">
+                <div class="rev-item-head">
+                  <strong>{{ r.nombre_usuario }}</strong>
+                  <div class="stars sm">
+                    <span *ngFor="let s of [1,2,3,4,5]" class="material-symbols-outlined"
+                          [class.empty]="s > r.calificacion"
+                          [style.font-variation-settings]="fillStyle(s <= r.calificacion)">star</span>
+                  </div>
+                  <span class="rev-muted">{{ r.fecha | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <p *ngIf="r.comentario" class="rev-comment">{{ r.comentario }}</p>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="resumen() && resumen()!.resenas.length === 0" class="rev-empty">
+            Aún no hay reseñas para este producto. ¡Sé el primero en calificarlo!
+          </div>
+        </div>
+      </div>
+
       <div *ngIf="addedToCart" class="toast">
         <span class="material-symbols-outlined" style="font-size:18px">check_circle</span>
         Agregado al carrito
@@ -199,14 +306,30 @@ export class ProductoDetalleComponent implements OnInit {
   quantity = 1;
   addedToCart = false;
 
+  // Reseñas
+  resumen = signal<ResenaResumen | null>(null);
+  estado = signal<ResenaEstado | null>(null);
+  hoverStar = signal(0);
+  submittingResena = signal(false);
+  reviewMsg = signal<string | null>(null);
+  reviewForm: FormGroup;
+
   private catMap = signal<Record<number, string>>({});
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private productService: ProductService,
-    private cartService: CartService
-  ) {}
+    private cartService: CartService,
+    private resenaService: ResenaService,
+    public authService: AuthService,
+    private fb: FormBuilder
+  ) {
+    this.reviewForm = this.fb.group({
+      calificacion: [0, [Validators.required, Validators.min(1), Validators.max(5)]],
+      comentario: ['']
+    });
+  }
 
   ngOnInit() {
     this.productService.getPublicCategories().subscribe({
@@ -229,8 +352,56 @@ export class ProductoDetalleComponent implements OnInit {
     this.loading.set(true);
     this.selectedImg.set('');
     this.productService.getPublicProductDetail(id).subscribe({
-      next: (p) => { this.product.set(p); this.loading.set(false); },
+      next: (p) => { this.product.set(p); this.loading.set(false); this.loadResenas(id); },
       error: (err) => { console.error('Error loading product detail', err); this.product.set(null); this.loading.set(false); }
+    });
+  }
+
+  loadResenas(id: number) {
+    this.resenaService.getResenasProducto(id).subscribe({
+      next: (res) => this.resumen.set(res),
+      error: () => this.resumen.set({ promedio: 0, total: 0, resenas: [] })
+    });
+    // Estado (puede/ya reseñó) solo tiene sentido para un CLIENTE autenticado.
+    if (this.isCliente()) {
+      this.resenaService.getEstado(id).subscribe({
+        next: (est) => {
+          this.estado.set(est);
+          if (est?.miResena) {
+            this.reviewForm.patchValue({
+              calificacion: est.miResena.calificacion,
+              comentario: est.miResena.comentario || ''
+            });
+          }
+        },
+        error: () => this.estado.set(null)
+      });
+    }
+  }
+
+  isLoggedIn(): boolean { return this.authService.isLoggedIn(); }
+  isCliente(): boolean { return this.authService.isCliente(); }
+
+  setCalificacion(n: number) {
+    this.reviewForm.patchValue({ calificacion: n });
+  }
+
+  submitResena(idProducto: number) {
+    if (this.reviewForm.invalid) return;
+    this.submittingResena.set(true);
+    this.reviewMsg.set(null);
+    const { calificacion, comentario } = this.reviewForm.value;
+    this.resenaService.crearResena({ id_producto: idProducto, calificacion, comentario: comentario || '' }).subscribe({
+      next: () => {
+        this.submittingResena.set(false);
+        this.reviewMsg.set('ok');
+        this.loadResenas(idProducto);
+        setTimeout(() => this.reviewMsg.set(null), 3000);
+      },
+      error: (err) => {
+        this.submittingResena.set(false);
+        this.reviewMsg.set(err?.error?.message || 'No se pudo guardar la reseña');
+      }
     });
   }
 
@@ -250,6 +421,7 @@ export class ProductoDetalleComponent implements OnInit {
   fillStyle(filled: boolean): string { return filled ? "'FILL' 1" : "'FILL' 0"; }
   starsFor(id: number): number { return 4 + (id % 2); }
   reviewsFor(id: number): number { return 20 + (id * 29) % 480; }
+  round(v: number): number { return Math.round(v || 0); }
 
   getPrecioFinal(): number {
     const p = this.product();

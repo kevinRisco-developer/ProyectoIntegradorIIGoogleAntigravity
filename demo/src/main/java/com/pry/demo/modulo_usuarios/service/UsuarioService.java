@@ -53,13 +53,11 @@ public class UsuarioService {
     public void deleteUsuario(Long id) {
         Usuario user = usuarioRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con id " + id));
-        
-        // Remove role mapping first to maintain integrity
-        usuarioRolRepository.findAll().stream()
-                .filter(ur -> ur.getId_usuario().equals(id))
-                .forEach(ur -> usuarioRolRepository.delete(ur));
 
-        usuarioRepository.delete(user);
+        // Baja LÓGICA (HU-29): no se elimina físicamente, se desactiva con estado = 0.
+        // Se conserva el mapeo de rol para poder reactivarlo luego.
+        user.setEstado(0);
+        usuarioRepository.save(user);
     }
 
     public Usuario createUsuario(Usuario usuario) {
@@ -93,6 +91,8 @@ public class UsuarioService {
         audit.setIs_mfa_enabled(usuario.isMfaEnabled());
         audit.setTotp_secret(usuario.getTotpSecret());
         audit.setId_admin(idAdmin);
+        audit.setAccion("MODIFICACION");
+        audit.setFecha(new java.sql.Timestamp(System.currentTimeMillis()));
         auditoriaUsuarioRepository.save(audit);
 
         // 2. Apply updates

@@ -21,7 +21,7 @@ import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
                   class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition-all flex items-center gap-1.5 shadow-lg shadow-blue-500/10 disabled:opacity-50">
             <span class="material-symbols-outlined text-sm animate-spin" *ngIf="generating">sync</span>
             <span class="material-symbols-outlined text-sm" *ngIf="!generating">backup</span>
-            <span>Generar Nuevo Backup</span>
+            <span>{{ generating ? 'Generando...' : 'Generar y descargar backup' }}</span>
           </button>
         </div>
 
@@ -78,12 +78,56 @@ import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
             </tbody>
           </table>
         </div>
+
+        <!-- Historial de respaldos (backup_log) -->
+        <div class="bg-slate-900 border border-slate-850 rounded-2xl overflow-hidden shadow-lg mt-8">
+          <div class="p-6 border-b border-slate-850 bg-slate-950/40 flex justify-between items-center">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Historial de respaldos (log)</h3>
+            <span class="text-xs text-slate-500 font-mono">Total: {{ logs.length }} registros</span>
+          </div>
+
+          <div *ngIf="logs.length === 0" class="p-12 text-center text-slate-500 flex flex-col items-center gap-2">
+            <span class="material-symbols-outlined text-4xl">history</span>
+            <span>Aún no hay respaldos registrados.</span>
+          </div>
+
+          <table *ngIf="logs.length > 0" class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-950 border-b border-slate-850 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <th class="p-4 pl-6">Archivo</th>
+                <th class="p-4">Origen</th>
+                <th class="p-4">Estado</th>
+                <th class="p-4">Tamaño</th>
+                <th class="p-4">Admin</th>
+                <th class="p-4 pr-6 text-right">Fecha</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-850 text-sm">
+              <tr *ngFor="let l of logs" class="hover:bg-slate-800/20 transition-colors">
+                <td class="p-4 pl-6 font-mono text-xs text-slate-300">{{ l.archivo || '—' }}</td>
+                <td class="p-4">
+                  <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border"
+                        [class]="l.tipo === 'CRON' ? 'bg-indigo-950/30 border-indigo-800 text-indigo-400' : 'bg-blue-950/30 border-blue-800 text-blue-400'">{{ l.tipo }}</span>
+                </td>
+                <td class="p-4">
+                  <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border"
+                        [class]="l.estado === 'OK' ? 'bg-emerald-950/30 border-emerald-800 text-emerald-400' : 'bg-rose-950/30 border-rose-800 text-rose-400'"
+                        [title]="l.mensaje || ''">{{ l.estado }}</span>
+                </td>
+                <td class="p-4 text-xs text-slate-400 font-mono">{{ formatBytes(l.tamano_bytes) }}</td>
+                <td class="p-4 text-xs text-slate-400 font-mono">{{ l.id_admin ? ('#' + l.id_admin) : 'Sistema' }}</td>
+                <td class="p-4 pr-6 text-right text-xs text-slate-500 font-mono">{{ l.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </main>
     </div>
   `
 })
 export class BackupComponent implements OnInit {
   backups: string[] = [];
+  logs: any[] = [];
   loading = true;
   generating = false;
   alertMessage = '';
@@ -93,6 +137,21 @@ export class BackupComponent implements OnInit {
 
   ngOnInit() {
     this.loadBackups();
+    this.loadLog();
+  }
+
+  loadLog() {
+    this.backupService.getLog().subscribe({
+      next: (data) => { this.logs = data || []; this.cdr.detectChanges(); },
+      error: () => { this.logs = []; }
+    });
+  }
+
+  formatBytes(bytes: number | null): string {
+    if (!bytes || bytes <= 0) return '—';
+    const u = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + u[i];
   }
 
   loadBackups() {
@@ -119,13 +178,19 @@ export class BackupComponent implements OnInit {
     this.backupService.generarBackup().subscribe({
       next: (res) => {
         this.generating = false;
-        this.alertMessage = `Backup generado exitosamente: ${res.archivo}`;
+        this.alertMessage = `Backup generado: ${res.archivo}. Iniciando descarga...`;
         this.loadBackups();
+        this.loadLog();
+        // Descarga automática del archivo recién creado.
+        if (res.archivo) {
+          this.descargarBackup(res.archivo);
+        }
         setTimeout(() => this.alertMessage = '', 6000);
       },
       error: (err) => {
         this.generating = false;
         this.errorMessage = 'Error de servidor: ' + (err.error?.error || err.message);
+        this.loadLog();
         this.cdr.detectChanges();
       }
     });

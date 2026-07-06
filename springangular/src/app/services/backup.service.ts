@@ -25,6 +25,11 @@ export class BackupService {
     return this.http.get(`${this.apiUrl}/listar`, { headers: this.getHeaders() });
   }
 
+  /** Historial de respaldos desde la tabla backup_log (HU-34). */
+  getLog(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/log`, { headers: this.getHeaders() });
+  }
+
   descargarBackup(fileName: string): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/descargar/${fileName}`, {
       headers: this.getHeaders(),

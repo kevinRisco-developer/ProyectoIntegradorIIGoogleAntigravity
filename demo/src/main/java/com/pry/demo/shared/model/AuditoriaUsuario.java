@@ -1,5 +1,6 @@
 package com.pry.demo.shared.model;
 
+import java.sql.Timestamp;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,6 +20,14 @@ public class AuditoriaUsuario {
     private String totp_secret;
     private Long id_usuario;
     private Long id_admin;
+    private String accion;
+    private Timestamp fecha;
+
+    public String getAccion() { return accion; }
+    public void setAccion(String accion) { this.accion = accion; }
+
+    public Timestamp getFecha() { return fecha; }
+    public void setFecha(Timestamp fecha) { this.fecha = fecha; }
 
     public Long getId_auditoria_usuario() {
         return id_auditoria_usuario;

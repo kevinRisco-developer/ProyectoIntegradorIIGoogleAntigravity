@@ -12,4 +12,10 @@ public interface Detalle_pedidoRepository extends JpaRepository<Detalle_pedido, 
 
     @Query(value = "CALL detallePedido_producto()", nativeQuery = true)
     List<Object[]> getDetallePedidoProductos();
+
+    // ¿El usuario COMPRÓ este producto? (pedido pagado o entregado). Usado por reseñas.
+    @Query(value = "SELECT COUNT(*) FROM detalle_pedido dp JOIN pedido p ON dp.id_pedido = p.id_pedido " +
+            "WHERE p.id_usuario = :uid AND dp.id_producto = :pid AND p.estado IN ('PAGADO','ENTREGADO')",
+            nativeQuery = true)
+    long countComprasProducto(@Param("uid") Long uid, @Param("pid") Long pid);
 }

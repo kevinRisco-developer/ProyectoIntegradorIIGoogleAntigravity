@@ -1,59 +1,92 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AuditoriaService } from '../../services/auditoria.service';
+import { FormsModule } from '@angular/forms';
+import { AuditoriaService, AuditoriaFiltro } from '../../services/auditoria.service';
 import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
 
 @Component({
   selector: 'app-auditoria-usuario',
   standalone: true,
-  imports: [CommonModule, SidebarComponent],
+  imports: [CommonModule, FormsModule, SidebarComponent],
   template: `
     <div class="min-h-screen bg-slate-950 text-white font-sans flex">
       <app-sidebar></app-sidebar>
 
       <main class="flex-1 p-10">
-        <div class="flex justify-between items-center mb-8 border-b border-slate-900 pb-6">
+        <div class="flex justify-between items-center mb-6 border-b border-slate-900 pb-6">
           <div>
             <h1 class="text-3xl font-black text-blue-400">Auditoría de Usuarios</h1>
-            <p class="text-slate-400 text-sm mt-1">Registro histórico de modificaciones, registros y cambios de roles de usuarios.</p>
+            <p class="text-slate-400 text-sm mt-1">Registro histórico de cambios en usuarios (HU-31).</p>
           </div>
           <span class="material-symbols-outlined text-4xl text-rose-500">shield_person</span>
         </div>
 
-        <div *ngIf="loading" class="p-10 text-center text-slate-500 flex flex-col items-center justify-center gap-2">
+        <!-- Filtros -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 mb-6 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Desde</label>
+            <input type="date" [(ngModel)]="f.desde" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Hasta</label>
+            <input type="date" [(ngModel)]="f.hasta" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Responsable (ID admin)</label>
+            <input type="number" [(ngModel)]="f.responsable" placeholder="ID" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Acción</label>
+            <select [(ngModel)]="f.accion" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-500 outline-none">
+              <option value="">Todas</option>
+              <option value="MODIFICACION">Modificación</option>
+              <option value="ELIMINACION">Eliminación</option>
+              <option value="CREACION">Creación</option>
+            </select>
+          </div>
+          <div class="flex gap-2">
+            <button (click)="filtrar()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-sm flex items-center justify-center gap-1">
+              <span class="material-symbols-outlined text-sm">filter_alt</span> Filtrar
+            </button>
+            <button (click)="limpiar()" class="px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm" title="Limpiar">
+              <span class="material-symbols-outlined text-sm">restart_alt</span>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="loading()" class="p-10 text-center text-slate-500 flex flex-col items-center gap-2">
           <span class="material-symbols-outlined text-4xl animate-spin">sync</span>
-          <span>Cargando bitácora de auditoría...</span>
+          <span>Cargando bitácora...</span>
         </div>
 
-        <div *ngIf="!loading && logs.length === 0" class="p-20 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
+        <div *ngIf="!loading() && logs().length === 0" class="p-20 text-center text-slate-500 flex flex-col items-center gap-3 bg-slate-900/20 border border-dashed border-slate-800 rounded-2xl">
           <span class="material-symbols-outlined text-5xl">inventory_2</span>
-          <span>No hay registros de auditoría de usuarios disponibles.</span>
+          <span>No hay registros que coincidan con el filtro.</span>
         </div>
 
-        <div *ngIf="!loading && logs.length > 0" class="bg-slate-900 border border-slate-850 rounded-2xl overflow-hidden shadow-lg">
+        <div *ngIf="!loading() && logs().length > 0" class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="bg-slate-950 border-b border-slate-850 text-xs font-bold uppercase tracking-wider text-slate-400">
+              <tr class="bg-slate-950 border-b border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-400">
                 <th class="p-4 pl-6">ID Log</th>
-                <th class="p-4">ID Usuario</th>
+                <th class="p-4">Usuario auditado</th>
                 <th class="p-4">Acción</th>
-                <th class="p-4">ID Admin Ejecutor</th>
-                <th class="p-4">Detalle / Query</th>
+                <th class="p-4">Responsable</th>
                 <th class="p-4 pr-6 text-right">Fecha</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-850 text-sm">
-              <tr *ngFor="let log of logs" class="hover:bg-slate-800/20 transition-colors">
-                <td class="p-4 pl-6 font-mono text-xs text-blue-400">#{{ log.id_auditoria }}</td>
-                <td class="p-4 font-mono text-xs text-slate-300">#{{ log.id_usuario }}</td>
+            <tbody class="divide-y divide-slate-800 text-sm">
+              <tr *ngFor="let log of logs()" class="hover:bg-slate-800/20 transition-colors">
+                <td class="p-4 pl-6 font-mono text-xs text-blue-400">#{{ log.id_auditoria_usuario }}</td>
                 <td class="p-4">
-                  <span [class]="getAccionClass(log.accion)" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border">
-                    {{ log.accion }}
-                  </span>
+                  <div class="text-white font-medium">{{ log.nombre }}</div>
+                  <div class="text-xs text-slate-500">{{ log.email }} · ID {{ log.id_usuario }}</div>
                 </td>
-                <td class="p-4 font-mono text-xs text-slate-400">#{{ log.id_admin || 'Sistema' }}</td>
-                <td class="p-4 text-xs font-light text-slate-350 max-w-xs truncate" [title]="log.detalles">{{ log.detalles || 'Sin detalles' }}</td>
-                <td class="p-4 pr-6 text-right text-xs text-slate-500 font-mono">{{ log.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+                <td class="p-4">
+                  <span [class]="accionClass(log.accion)" class="text-[10px] font-bold uppercase px-2 py-0.5 rounded border">{{ log.accion }}</span>
+                </td>
+                <td class="p-4 font-mono text-xs text-slate-400">Admin #{{ log.id_admin || '—' }}</td>
+                <td class="p-4 pr-6 text-right text-xs text-slate-500 font-mono">{{ log.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
               </tr>
             </tbody>
           </table>
@@ -63,34 +96,30 @@ import { SidebarComponent } from '../../shared/sidebar/sidebar.component';
   `
 })
 export class AuditoriaUsuarioComponent implements OnInit {
-  logs: any[] = [];
-  loading = true;
+  logs = signal<any[]>([]);
+  loading = signal(true);
+  f: AuditoriaFiltro = {};
 
   constructor(private auditoriaService: AuditoriaService) {}
 
-  ngOnInit() {
-    this.auditoriaService.getAuditoriaUsuarios().subscribe({
-      next: (data) => {
-        // Ordenar del más reciente al más antiguo
-        this.logs = data.sort((a, b) => b.id_auditoria - a.id_auditoria);
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-      }
+  ngOnInit() { this.filtrar(); }
+
+  filtrar() {
+    this.loading.set(true);
+    this.auditoriaService.filtrarUsuarios(this.f).subscribe({
+      next: (data) => { this.logs.set(data || []); this.loading.set(false); },
+      error: () => { this.logs.set([]); this.loading.set(false); }
     });
   }
 
-  getAccionClass(accion: string): string {
-    switch (accion?.toUpperCase()) {
-      case 'CREATE':
-        return 'bg-emerald-950/20 border-emerald-900/40 text-emerald-400';
-      case 'UPDATE':
-        return 'bg-blue-950/20 border-blue-900/40 text-blue-400';
-      case 'DELETE':
-        return 'bg-rose-950/20 border-rose-900/40 text-rose-400';
-      default:
-        return 'bg-slate-900 border-slate-700 text-slate-400';
+  limpiar() { this.f = {}; this.filtrar(); }
+
+  accionClass(accion: string): string {
+    switch ((accion || '').toUpperCase()) {
+      case 'CREACION':     return 'bg-emerald-950/30 border-emerald-800 text-emerald-400';
+      case 'MODIFICACION': return 'bg-blue-950/30 border-blue-800 text-blue-400';
+      case 'ELIMINACION':  return 'bg-rose-950/30 border-rose-800 text-rose-400';
+      default:             return 'bg-slate-900 border-slate-700 text-slate-400';
     }
   }
 }
